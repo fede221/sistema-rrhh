@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, minimal-ui" />
+    <meta name="theme-color" content="#1976d2" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1976d2" />
+    <meta
+      name="description"
+      content="Sistema de Recursos Humanos - Gestión de recibos de sueldo, legajos y administración de personal"
+    />
+    
+    <!-- Meta tags para comportamiento de app móvil -->
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="RRHH System" />
+    
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RRHH System">
+    <meta name="application-name" content="RRHH System">
+    <meta name="msapplication-TileColor" content="#1976d2">
+    <meta name="msapplication-config" content="%PUBLIC_URL%/browserconfig.xml">
+    
+    <!-- Splash Screen para iOS -->
+    <link rel="apple-touch-startup-image" href="%PUBLIC_URL%/logo512.png">
+    
+    <!-- Preload de fuentes para mejor rendimiento -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <title>Sistema RRHH - Gestión de Recursos Humanos</title>
+    
+    <style>
+      /* Prevenir zoom en inputs en iOS */
+      @media screen and (-webkit-min-device-pixel-ratio:0) {
+        select,
+        textarea,
+        input[type="text"],
+        input[type="password"],
+        input[type="datetime"],
+        input[type="datetime-local"],
+        input[type="date"],
+        input[type="month"],
+        input[type="time"],
+        input[type="week"],
+        input[type="number"],
+        input[type="email"],
+        input[type="url"],
+        input[type="search"],
+        input[type="tel"],
+        input[type="color"] {
+          font-size: 16px !important;
+        }
+      }
+      
+      /* Loading spinner inicial */
+      .initial-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>Necesitas habilitar JavaScript para ejecutar esta aplicación.</noscript>
+    
+    <!-- Loading inicial -->
+    <div id="initial-loader" class="initial-loader">
+      <div style="text-align: center;">
+        <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1976d2; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+        <p style="color: #1976d2; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0;">Cargando Sistema RRHH...</p>
+      </div>
+    </div>
+    
+    <div id="root"></div>
+    
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+    
+    <script>
+      // Script agresivo para ocultar barra de navegación en móviles
+      (function() {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && window.innerWidth <= 768;
+        
+        if (isMobile) {
+          // Configurar viewport inmediatamente
+          var viewport = document.querySelector('meta[name="viewport"]');
+          if (viewport) {
+            viewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, minimal-ui');
+          }
+          
+          // Función agresiva para ocultar barra
+          function hideAddressBar() {
+            // Método 1: Scroll básico
+            window.scrollTo(0, 1);
+            
+            // Método 2: Para Chrome móvil
+            if (window.chrome) {
+              document.body.style.height = '101vh';
+              setTimeout(() => {
+                document.body.style.height = '100vh';
+              }, 100);
+            }
+            
+            // Método 3: Resize trick
+            window.resizeTo(window.innerWidth, window.screen.height);
+            
+            // Método 4: Fullscreen request para navegadores compatibles
+            if (document.documentElement.requestFullscreen) {
+              document.documentElement.requestFullscreen().catch(() => {});
+            } else if (document.documentElement.webkitRequestFullscreen) {
+              document.documentElement.webkitRequestFullscreen().catch(() => {});
+            }
+          }
+          
+          // Ejecutar múltiples veces con diferentes delays
+          setTimeout(hideAddressBar, 0);
+          setTimeout(hideAddressBar, 100);
+          setTimeout(hideAddressBar, 500);
+          setTimeout(hideAddressBar, 1000);
+          
+          // Al cargar completamente
+          window.addEventListener('load', function() {
+            setTimeout(hideAddressBar, 100);
+            setTimeout(hideAddressBar, 500);
+          });
+          
+          // Al cambiar orientación
+          window.addEventListener('orientationchange', function() {
+            setTimeout(hideAddressBar, 100);
+            setTimeout(hideAddressBar, 500);
+            setTimeout(hideAddressBar, 1000);
+          });
+          
+          // Al hacer scroll
+          let scrollTimeout;
+          window.addEventListener('scroll', function() {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(hideAddressBar, 100);
+          });
+          
+          // Para iOS específicamente
+          if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            // Configurar CSS inmediato para iOS
+            document.documentElement.style.height = '100%';
+            document.body.style.height = '100%';
+            document.body.style.webkitTransform = 'translate3d(0,0,0)';
+            
+            // Prevenir comportamientos de Safari
+            document.addEventListener('touchstart', function(e) {
+              if (e.touches.length > 1) e.preventDefault();
+            });
+            
+            // Prevenir doble tap zoom
+            var lastTouchEnd = 0;
+            document.addEventListener('touchend', function(e) {
+              var now = (new Date()).getTime();
+              if (now - lastTouchEnd <= 300) e.preventDefault();
+              lastTouchEnd = now;
+            });
+            
+            // Método específico para iOS Safari
+            function iOSHideBar() {
+              window.scrollTo(0, 0);
+              setTimeout(() => window.scrollTo(0, 1), 50);
+            }
+            
+            setTimeout(iOSHideBar, 0);
+            setTimeout(iOSHideBar, 500);
+            setTimeout(iOSHideBar, 1000);
+          }
+          
+          // Para Android Chrome específicamente
+          if (/Android/i.test(navigator.userAgent) && /Chrome/i.test(navigator.userAgent)) {
+            // Método específico para Chrome móvil
+            function androidHideBar() {
+              const vh = window.innerHeight * 0.01;
+              document.documentElement.style.setProperty('--vh', `${vh}px`);
+              
+              // Forzar altura completa
+              document.body.style.height = '100vh';
+              document.body.style.height = 'calc(var(--vh, 1vh) * 100)';
+              
+              window.scrollTo(0, 1);
+            }
+            
+            setTimeout(androidHideBar, 0);
+            setTimeout(androidHideBar, 100);
+            setTimeout(androidHideBar, 500);
+            
+            window.addEventListener('resize', androidHideBar);
+          }
+        }
+      })();
+      
+      // Ocultar loader cuando React se monte
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const loader = document.getElementById('initial-loader');
+          if (loader) {
+            loader.style.opacity = '0';
+            loader.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => {
+              if (loader.parentNode) {
+                loader.parentNode.removeChild(loader);
+              }
+            }, 300);
+          }
+        }, 500);
+      });
+    </script>
+  </body>
+</html>

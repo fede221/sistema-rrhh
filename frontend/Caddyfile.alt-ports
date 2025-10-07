@@ -1,0 +1,40 @@
+rrhh.dbconsulting.com.ar:8443 {
+    # Servir archivos estáticos del frontend
+    root * /usr/share/caddy
+    
+    # Proxy para API requests al backend
+    reverse_proxy /api/* backend:3001
+    
+    # Proxy para uploads al backend
+    reverse_proxy /uploads/* backend:3001
+    
+    # Configurar headers de seguridad
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-XSS-Protection "1; mode=block"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer-when-downgrade"
+        X-Robots-Tag "noindex, nofollow"
+        -Server
+    }
+    
+    # Configurar cache para archivos estáticos
+    @static {
+        path *.css *.js *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2 *.ttf *.eot
+    }
+    header @static Cache-Control "public, max-age=31536000, immutable"
+    
+    # Handle React Router - todas las rutas van a index.html
+    try_files {path} /index.html
+    
+    # Logs
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+}
+
+# Redirect HTTP to HTTPS on port 8080
+rrhh.dbconsulting.com.ar:8080 {
+    redir https://rrhh.dbconsulting.com.ar:8443{uri} permanent
+}
