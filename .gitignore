@@ -45,11 +45,14 @@ ehthumbs.db
 Thumbs.db
 
 # Docker
-.dockerignore
+# Permitir subir archivos .dockerignore (eran ignorados por error)
 
-# Archivos específicos del proyecto
-recibos*/
-fimas*/
+
+# Archivos específicos del proyecto (solo carpetas de nivel raíz)
+# Evitar ignorar páginas del frontend como frontend/src/pages/Recibos/
+/recibos cat/
+/recibos test/
+/fimas logos/
 
 # Configuraciones locales
 config.local.js
@@ -71,5 +74,4 @@ settings.local.json
 coverage/
 .nyc_output/
 
-# PM2
-ecosystem.config.js
+# PM2 (permitimos versionar el archivo de configuración)
