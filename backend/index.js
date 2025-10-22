@@ -14,11 +14,13 @@ app.use(helmetConfig());
 // Permite definir CORS_ORIGIN como una lista separada por comas en el entorno
 // Ejemplo: CORS_ORIGIN="https://rrhh.tudominio.com,http://localhost:3002"
 let allowedOrigins = [
-  'http://localhost:3002',
-  'http://localhost', 
+  'http://localhost:3000',  // Frontend React default port
+  'http://localhost:3002',  // Additional frontend port
+  'http://localhost',
   'https://rrhh.dbconsulting.com.ar',
   'http://rrhh.dbconsulting.com.ar',
-  'http://127.0.0.1:3002'
+  'http://127.0.0.1:3000',  // Frontend React default port (127.0.0.1)
+  'http://127.0.0.1:3002'   // Additional frontend port (127.0.0.1)
 ];
 
 // Agregar orígenes desde variable de entorno
