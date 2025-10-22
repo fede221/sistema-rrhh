@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const { authLimiter, passwordRecoveryLimiter } = require('../middlewares/rateLimiter');
 
-router.post('/login', authController.login);
+// Login con rate limiting estricto - máximo 5 intentos cada 15 minutos
+// Protección contra ataques de fuerza bruta
+router.post('/login', authLimiter, authController.login);
 
-// Ruta para cambio de contraseña después de validar preguntas
-router.post('/reset-password/:userId', authController.resetPassword);
-
-// Nueva ruta para obtener preguntas de recuperación por DNI
-router.get('/recovery-questions/:dni', authController.getRecoveryQuestions);
-
-// Nueva ruta para validar respuestas y permitir cambio de contraseña
-router.post('/validate-recovery', authController.validateRecoveryAnswers);
+// Rutas de recuperación de contraseña con rate limiting
+// Máximo 3 intentos por hora para prevenir enumeración de usuarios
+router.get('/recovery-questions/:dni', passwordRecoveryLimiter, authController.getRecoveryQuestions);
+router.post('/validate-recovery', passwordRecoveryLimiter, authController.validateRecoveryAnswers);
+router.post('/reset-password/:userId', passwordRecoveryLimiter, authController.resetPassword);
 
 module.exports = router;
 
