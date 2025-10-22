@@ -3,41 +3,43 @@ const { logger } = require('../utils/secureLogger');
 
 // Middleware base: verifica el token y agrega el usuario al request
 function verifyToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
+  let token = null;
+  let tokenSource = null;
 
-  // ⚠️ NO loguear el authHeader completo - contiene el token
-  // console.log("🔐 Authorization header:", authHeader); // REMOVIDO por seguridad
-
-  if (!authHeader) {
-    logger.auth('❌ No authorization header', {
-      ip: req.ip,
-      url: req.originalUrl
-    });
-    return res.sendStatus(403);
+  // 🔐 PRIORIDAD 1: Leer token de cookie HttpOnly (más seguro contra XSS)
+  if (req.cookies && req.cookies.authToken) {
+    token = req.cookies.authToken;
+    tokenSource = 'cookie';
   }
 
-  // Verificar formato del header
-  if (!authHeader.startsWith('Bearer ')) {
-    logger.auth('❌ Authorization header formato inválido', {
-      ip: req.ip,
-      url: req.originalUrl
-    });
-    return res.sendStatus(403);
-  }
-
-  const token = authHeader.split(' ')[1];
-
-  // ⚠️ NO loguear el token - es información sensible
-  // console.log("📦 Token recibido:", token); // REMOVIDO por seguridad
-
+  // PRIORIDAD 2: Leer token de Authorization header (compatibilidad con localStorage)
+  // ⚠️ Este método es menos seguro (vulnerable a XSS) y será removido en el futuro
   if (!token) {
-    logger.auth('❌ Token vacío', { ip: req.ip });
+    const authHeader = req.headers['authorization'];
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+      tokenSource = 'header';
+    }
+  }
+
+  // Si no hay token en ningún lado
+  if (!token) {
+    logger.auth('❌ No token (ni en cookie ni en header)', {
+      ip: req.ip,
+      url: req.originalUrl,
+      hasCookie: !!req.cookies?.authToken,
+      hasAuthHeader: !!req.headers['authorization']
+    });
     return res.sendStatus(403);
   }
 
   // Verificar si el token parece ser un objeto JSON en lugar de un JWT
   if (token.startsWith('{')) {
-    logger.auth('❌ Token formato inválido (JSON)', { ip: req.ip });
+    logger.auth('❌ Token formato inválido (JSON)', {
+      ip: req.ip,
+      source: tokenSource
+    });
     return res.sendStatus(403);
   }
 
@@ -45,7 +47,8 @@ function verifyToken(req, res, next) {
     if (err) {
       logger.auth('❌ Error al verificar token', {
         error: err.message,
-        ip: req.ip
+        ip: req.ip,
+        source: tokenSource
       });
       return res.sendStatus(403);
     }
@@ -54,7 +57,8 @@ function verifyToken(req, res, next) {
     logger.debug('✅ Token verificado', {
       userId: decoded.id,
       rol: decoded.rol,
-      dni: decoded.dni
+      dni: decoded.dni,
+      source: tokenSource // 'cookie' (seguro) o 'header' (legacy, inseguro)
       // NO incluir el token completo ni decoded completo
     });
 

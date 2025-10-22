@@ -29,6 +29,8 @@ export const apiRequest = async (endpoint, options = {}) => {
     ...options.headers
   };
 
+  // ⚠️ COMPATIBILIDAD: Leer token de localStorage para migración gradual
+  // El backend ahora usa cookies HttpOnly (más seguro), pero mantiene soporte para headers
   const token = secureStorage.getItem('token');
   if (token) {
     defaultHeaders['Authorization'] = `Bearer ${token}`;
@@ -36,7 +38,8 @@ export const apiRequest = async (endpoint, options = {}) => {
 
   const response = await fetch(url, {
     ...options,
-    headers: defaultHeaders
+    headers: defaultHeaders,
+    credentials: 'include' // 🔐 Enviar cookies HttpOnly con cada request
   });
 
   // Si se solicita la respuesta raw (para descargas de archivos)

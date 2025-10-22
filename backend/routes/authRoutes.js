@@ -7,6 +7,9 @@ const { authLimiter, passwordRecoveryLimiter } = require('../middlewares/rateLim
 // Protección contra ataques de fuerza bruta
 router.post('/login', authLimiter, authController.login);
 
+// Logout - limpiar cookie HttpOnly
+router.post('/logout', authController.logout);
+
 // Rutas de recuperación de contraseña con rate limiting
 // Máximo 3 intentos por hora para prevenir enumeración de usuarios
 router.get('/recovery-questions/:dni', passwordRecoveryLimiter, authController.getRecoveryQuestions);

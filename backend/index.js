@@ -1,6 +1,7 @@
 require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const { apiLimiter } = require('./middlewares/rateLimiter');
 const helmetConfig = require('./config/helmet');
 const app = express();
@@ -72,6 +73,9 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Cookie parser para leer cookies HttpOnly en autenticación
+app.use(cookieParser());
 
 // Rate limiting general para toda la API
 // Protección contra DoS y uso abusivo

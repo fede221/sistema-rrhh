@@ -33,8 +33,20 @@ exports.login = (req, res) => {
         { expiresIn: '50m' }
       );
 
+      // 🔐 Configurar cookie HttpOnly segura
+      const isProduction = process.env.NODE_ENV === 'production';
+      res.cookie('authToken', token, {
+        httpOnly: true,     // NO accesible desde JavaScript (protección XSS)
+        secure: isProduction, // Solo HTTPS en producción
+        sameSite: 'lax',    // Protección CSRF moderada (permite navegación normal)
+        maxAge: 50 * 60 * 1000, // 50 minutos (igual que el token JWT)
+        path: '/'           // Cookie disponible en toda la app
+      });
+
+      // También enviar token en JSON para compatibilidad durante migración
+      // TODO: Remover "token" del response una vez que el frontend use solo cookies
       res.json({
-        token,
+        token, // ⚠️ DEPRECADO - Solo para compatibilidad, remover en futuro
         rol: usuario.rol,
         nombre: usuario.nombre,
         apellido: usuario.apellido,
@@ -45,6 +57,21 @@ exports.login = (req, res) => {
         dni: usuario.dni
       });
     });
+  });
+};
+
+exports.logout = (req, res) => {
+  // Limpiar cookie de autenticación
+  res.clearCookie('authToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/'
+  });
+
+  res.json({
+    success: true,
+    message: 'Logout exitoso'
   });
 };
 
