@@ -2,7 +2,12 @@ require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const cors = require('cors');
 const { apiLimiter } = require('./middlewares/rateLimiter');
+const helmetConfig = require('./config/helmet');
 const app = express();
+
+// Headers de seguridad con Helmet
+// Protección contra XSS, clickjacking, sniffing, etc.
+app.use(helmetConfig());
 
 // Configuración CORS para producción
 // Permite definir CORS_ORIGIN como una lista separada por comas en el entorno
