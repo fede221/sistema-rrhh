@@ -20,7 +20,6 @@ import MobileAppWrapper from './components/MobileAppWrapper';
 import FullscreenMobile from './components/FullscreenMobile';
 import './App.css';
 import './styles/responsive.css';
-import RequireAuth from './components/RequireAuth'; 
 import LegajoEmpleado from './pages/Legajo/LegajoEmpleado';
 import LegajoAdmin from './pages/Legajo/LegajoAdmin';
 import ErroresLog from './pages/ErroresLog';
@@ -75,73 +74,70 @@ const AppLayout = () => {
           <Route path="/vacaciones" element={token ? <Vacaciones /> : <Navigate to="/login" />} />
           <Route path="/recibos" element={token ? <Recibos /> : <Navigate to="/login" />} />
           <Route 
-            path="/recibos/empresas" 
+            path="/empresas" 
             element={
               token && user?.rol && ['admin', 'superadmin', 'admin_rrhh'].includes(user.rol) ? 
               <GestionEmpresas /> : 
               <Navigate to="/login" />
             } 
           />
-        <Route 
-          path="/legajo"
-          element={
-            token ? (
-              user?.rol === 'empleado' ? (
-                <LegajoEmpleado />
+          <Route 
+            path="/legajos"
+            element={
+              token ? (
+                user?.rol === 'empleado' ? (
+                  <LegajoEmpleado />
+                ) : user?.rol && ['admin_rrhh', 'superadmin'].includes(user.rol) ? (
+                  <LegajoAdmin />
+                ) : (
+                  <Legajo />
+                )
               ) : (
-                <Legajo />
+                <Navigate to="/login" />
               )
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/preguntas-iniciales" element={<PreguntasIniciales />} />
-        <Route 
-          path="/" 
-          element={
-            token ? (
-              user?.rol === 'empleado' ? 
-              <Navigate to="/bienvenida" replace /> : 
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } 
-        />
-        <Route 
-          path="*" 
-          element={
-            token ? (
-              user?.rol === 'empleado' ? 
-              <Navigate to="/bienvenida" replace /> : 
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } 
-        />
-        <Route path="/legajos-admin" element={
-        <RequireAuth allowedRoles={['admin_rrhh', 'superadmin']}>
-        <LegajoAdmin />
-        </RequireAuth>
-} />
-        <Route path="/errores-log" element={
-          token && user?.rol === 'superadmin' ? <ErroresLog /> : <Navigate to="/login" />
-        } />
-        <Route path="/permisos" element={
-          token && user?.rol === 'superadmin' ? <GestionPermisos /> : <Navigate to="/login" />
-        } />
-        <Route path="/permisos/nuevos" element={
-          token && user?.rol === 'superadmin' ? <GestionPermisosNuevos /> : <Navigate to="/login" />
-        } />
-        <Route path="/monitoring" element={
-          token && user?.rol === 'superadmin' ? <MonitoringDashboard /> : <Navigate to="/login" />
-        } />
-        <Route path="/mi-equipo" element={
-          token && (user?.rol === 'referente' || user?.rol === 'superadmin') ? <MiEquipo /> : <Navigate to="/login" />
-        } />
+            }
+          />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/preguntas-iniciales" element={<PreguntasIniciales />} />
+          <Route path="/errores" element={
+            token && user?.rol === 'superadmin' ? <ErroresLog /> : <Navigate to="/login" />
+          } />
+          <Route path="/permisos" element={
+            token && user?.rol === 'superadmin' ? <GestionPermisos /> : <Navigate to="/login" />
+          } />
+          <Route path="/permisos/nuevos" element={
+            token && user?.rol === 'superadmin' ? <GestionPermisosNuevos /> : <Navigate to="/login" />
+          } />
+          <Route path="/monitoring" element={
+            token && user?.rol === 'superadmin' ? <MonitoringDashboard /> : <Navigate to="/login" />
+          } />
+          <Route path="/mi-equipo" element={
+            token && (user?.rol === 'referente' || user?.rol === 'superadmin') ? <MiEquipo /> : <Navigate to="/login" />
+          } />
+          <Route 
+            path="/" 
+            element={
+              token ? (
+                user?.rol === 'empleado' ? 
+                <Navigate to="/bienvenida" replace /> : 
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            } 
+          />
+          <Route 
+            path="*" 
+            element={
+              token ? (
+                user?.rol === 'empleado' ? 
+                <Navigate to="/bienvenida" replace /> : 
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            } 
+          />
         </Routes>
       </div>
       <InstallPWA />
