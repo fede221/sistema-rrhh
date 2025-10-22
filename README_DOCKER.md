@@ -64,14 +64,24 @@ sistema-rrhh/
 Crear archivo `.env` en el servidor:
 
 ```env
-DB_HOST=34.176.128.94
-DB_USER=root
-DB_PASSWORD=tu_password
+# Base de Datos MySQL
+DB_HOST=tu_servidor_mysql
+DB_USER=tu_usuario_mysql
+DB_PASSWORD=tu_password_seguro
 DB_NAME=RRHH
 DB_PORT=3306
-JWT_SECRET=tu_secret_seguro
+
+# JWT Secret - Genera uno con: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+JWT_SECRET=tu_jwt_secret_muy_seguro_de_128_caracteres_minimo
+
 NODE_ENV=production
 ```
+
+⚠️ **IMPORTANTE SEGURIDAD:**
+- Nunca uses usuario `root` para aplicaciones
+- Genera JWT_SECRET con al menos 64 bytes aleatorios
+- Usa contraseñas fuertes (mínimo 16 caracteres, letras, números, símbolos)
+- NO compartas estas credenciales en Git, Slack, o email
 
 ## 🌐 Configuración de Red
 
@@ -174,8 +184,11 @@ docker compose restart
 ### Problemas de conexión con la DB
 
 ```bash
-# Probar desde el contenedor
-docker exec rrhh-backend node -e "const mysql = require('mysql2/promise'); mysql.createConnection({host:'34.176.128.94',user:'root',password:'pos38ric0S'}).then(() => console.log('OK'))"
+# Probar desde el contenedor (usa las credenciales de tu .env)
+docker exec rrhh-backend node -e "const mysql = require('mysql2/promise'); mysql.createConnection({host:process.env.DB_HOST,user:process.env.DB_USER,password:process.env.DB_PASSWORD}).then(() => console.log('OK')).catch(e => console.error(e))"
+
+# O verificar variables de entorno
+docker exec rrhh-backend env | grep DB_
 ```
 
 ### Frontend no muestra datos

@@ -6,13 +6,13 @@ services:
     container_name: rrhh-backend
     restart: unless-stopped
     environment:
-      - DB_HOST=34.176.128.94
-      - DB_USER=root
-      - DB_PASSWORD=pos38ric0S
-      - DB_NAME=RRHH
-      - DB_PORT=3306
-      - JWT_SECRET=claveultrasecreta123
-      - NODE_ENV=production
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME:-RRHH}
+      - DB_PORT=${DB_PORT:-3306}
+      - JWT_SECRET=${JWT_SECRET}
+      - NODE_ENV=${NODE_ENV:-production}
     ports:
       - "3001:3001"
     volumes:
