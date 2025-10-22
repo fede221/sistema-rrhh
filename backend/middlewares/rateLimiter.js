@@ -18,10 +18,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false, // Deshabilita headers `X-RateLimit-*`
   skipSuccessfulRequests: false, // Cuenta todos los requests, exitosos o no
   skipFailedRequests: false,
-  // Identificar por IP
-  keyGenerator: (req) => {
-    return req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  },
+  // ✅ Removido keyGenerator personalizado - express-rate-limit maneja IPv4/IPv6 automáticamente
   handler: (req, res) => {
     console.warn(`🚨 Rate limit excedido para IP: ${req.ip} en ruta: ${req.path}`);
     res.status(429).json({
@@ -43,9 +40,7 @@ const passwordRecoveryLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  },
+  // ✅ Removido keyGenerator personalizado - express-rate-limit maneja IPv4/IPv6 automáticamente
   handler: (req, res) => {
     console.warn(`🚨 Rate limit de recuperación excedido para IP: ${req.ip}`);
     res.status(429).json({
@@ -68,9 +63,7 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: false,
-  keyGenerator: (req) => {
-    return req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  },
+  // ✅ Removido keyGenerator personalizado - express-rate-limit maneja IPv4/IPv6 automáticamente
   handler: (req, res) => {
     console.warn(`🚨 Rate limit general excedido para IP: ${req.ip} en ruta: ${req.path}`);
     res.status(429).json({
@@ -93,9 +86,7 @@ const writeLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: false,
-  keyGenerator: (req) => {
-    return req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  },
+  // ✅ Removido keyGenerator personalizado - express-rate-limit maneja IPv4/IPv6 automáticamente
   handler: (req, res) => {
     console.warn(`🚨 Rate limit de escritura excedido para IP: ${req.ip} en ${req.method} ${req.path}`);
     res.status(429).json({
@@ -117,9 +108,7 @@ const uploadLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  },
+  // ✅ Removido keyGenerator personalizado - express-rate-limit maneja IPv4/IPv6 automáticamente
   handler: (req, res) => {
     console.warn(`🚨 Rate limit de uploads excedido para IP: ${req.ip}`);
     res.status(429).json({
@@ -138,9 +127,7 @@ const createCustomLimiter = (options = {}) => {
     message: options.message || { error: 'Demasiadas solicitudes' },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => {
-      return req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    },
+    // ✅ Removido keyGenerator personalizado - express-rate-limit maneja IPv4/IPv6 automáticamente
     handler: (req, res) => {
       console.warn(`🚨 Rate limit personalizado excedido para IP: ${req.ip}`);
       res.status(429).json(options.message || { error: 'Demasiadas solicitudes' });
