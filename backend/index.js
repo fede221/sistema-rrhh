@@ -15,7 +15,9 @@ app.use(helmetConfig());
 // Ejemplo: CORS_ORIGIN="https://rrhh.tudominio.com,http://localhost:3002"
 let allowedOrigins = [
   'http://localhost:3002',
-  'http://localhost',
+  'http://localhost', 
+  'https://rrhh.dbconsulting.com.ar',
+  'http://rrhh.dbconsulting.com.ar',
   'http://127.0.0.1:3002'
 ];
 
