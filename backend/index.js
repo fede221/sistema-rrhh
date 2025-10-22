@@ -1,6 +1,7 @@
 require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const cors = require('cors');
+const { apiLimiter } = require('./middlewares/rateLimiter');
 const app = express();
 
 // Configuración CORS para producción
@@ -68,6 +69,11 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Rate limiting general para toda la API
+// Protección contra DoS y uso abusivo
+app.use('/api/', apiLimiter);
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
