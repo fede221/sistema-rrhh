@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const { buildAbsoluteUrl } = require('../utils/urlHelper');
+const { logger } = require('../utils/secureLogger');
 
 // Obtener todas las empresas
 exports.getEmpresas = (req, res) => {
@@ -133,11 +134,17 @@ exports.crearEmpresa = (req, res) => {
 exports.actualizarEmpresa = (req, res) => {
   const user = req.user;
   const { id } = req.params; // Obtener ID de los parámetros
-  
-  console.log('🔄 Actualizando empresa ID:', id);
-  console.log('📝 Datos recibidos:', req.body);
-  console.log('📎 Archivos recibidos:', req.files);
-  
+
+  // ⚠️ NO loguear req.body completo - puede contener información sensible de la empresa
+  logger.info('🔄 Actualizando empresa', {
+    empresaId: id,
+    userId: user?.id,
+    userRole: user?.rol,
+    tieneArchivos: !!req.files,
+    cantidadCampos: Object.keys(req.body || {}).length,
+    ip: req.ip
+  });
+
   // Verificar que el usuario sea admin
   if (!user || !['admin', 'superadmin', 'admin_rrhh'].includes(user.rol)) {
     return res.status(403).json({ error: 'Acceso denegado. Solo administradores pueden actualizar empresas.' });

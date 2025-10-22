@@ -4,6 +4,7 @@ const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const { verifyToken, verifyAdminRRHH, verifySuperadmin } = require('../middlewares/verifyToken');
 const preguntasController = require('../controllers/preguntasController');
+const { logger } = require('../utils/secureLogger');
 // ✅ Obtener preguntas secretas precargadas
 router.get('/preguntas-secretas', (req, res) => {
   db.query('SELECT * FROM preguntas', (err, result) => {
@@ -17,14 +18,21 @@ router.post('/guardar-respuestas', verifyToken, async (req, res) => {
   const { respuestas } = req.body;
   const userId = req.user.id;
 
-  console.log('🟡 Intentando guardar respuestas de seguridad');
-  console.log('Usuario ID:', userId);
-  console.log('Respuestas recibidas:', respuestas);
+  // ⚠️ NO loguear las respuestas - son secretos de autenticación
+  logger.security('🔐 Guardando respuestas de seguridad', {
+    userId,
+    cantidadRespuestas: respuestas?.length,
+    ip: req.ip
+  });
 
   try {
     for (const r of respuestas) {
       if (!r.pregunta_id || !r.respuesta) {
-        console.error('❌ Respuesta inválida:', r);
+        logger.security('❌ Respuesta inválida (falta pregunta_id o respuesta)', {
+          userId,
+          tienePreguntaId: !!r.pregunta_id,
+          tieneRespuesta: !!r.respuesta
+        });
         return res.status(400).json({ error: 'Faltan datos en alguna respuesta' });
       }
       const hashed = await bcrypt.hash(r.respuesta, 10);

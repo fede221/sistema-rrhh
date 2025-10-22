@@ -18,6 +18,7 @@ exports.miLegajo = (req, res) => {
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const { logError } = require('../utils/errorLogger');
+const { logger } = require('../utils/secureLogger');
 
 
 
@@ -583,18 +584,26 @@ const convertirFechaExcel = (numeroSerie) => {
 };
 
 exports.importarUsuariosMasivo = async (req, res) => {
-  console.log('🔥 Recibida petición de importación masiva');
-  console.log('📦 Body recibido:', req.body);
-  console.log('👤 Usuario:', req.user);
-  
+  // ⚠️ NO loguear req.body - contiene contraseñas de usuarios nuevos
+  logger.info('🔥 Recibida petición de importación masiva', {
+    userId: req.user?.id,
+    userRole: req.user?.rol,
+    ip: req.ip
+  });
+
   const { usuarios } = req.body;
 
   if (!usuarios || !Array.isArray(usuarios) || usuarios.length === 0) {
-    console.log('❌ Error: Array de usuarios vacío o inválido');
+    logger.info('❌ Error: Array de usuarios vacío o inválido', {
+      userId: req.user?.id
+    });
     return res.status(400).json({ error: 'Debe proporcionar un array de usuarios' });
   }
 
-  console.log(`📊 Procesando ${usuarios.length} usuarios`);
+  logger.info(`📊 Procesando ${usuarios.length} usuarios`, {
+    cantidad: usuarios.length,
+    userId: req.user?.id
+  });
 
   const resultados = {
     exitosos: 0,
