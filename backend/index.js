@@ -4,17 +4,20 @@ const cors = require('cors');
 const app = express();
 
 // Configuración CORS para producción
-// Permite definir CORS_ORIGIN como una lista separada por comas en el entorno,
-// por ejemplo: CORS_ORIGIN="https://rrhh.dbconsulting.com.ar,http://192.168.203.24:8080"
+// Permite definir CORS_ORIGIN como una lista separada por comas en el entorno
+// Ejemplo: CORS_ORIGIN="https://rrhh.tudominio.com,http://localhost:3002"
 let allowedOrigins = [
   'http://localhost:3002',
   'http://localhost',
-  'http://127.0.0.1:3002',
-  'https://rrhh.dbconsulting.com.ar',
-  'http://rrhh.dbconsulting.com.ar',
-  'https://34.176.124.72',
-  'http://34.176.124.72'
+  'http://127.0.0.1:3002'
 ];
+
+// Agregar orígenes desde variable de entorno
+if (process.env.CORS_ORIGIN) {
+  const envOrigins = process.env.CORS_ORIGIN.split(',').map(o => o.trim());
+  allowedOrigins = [...allowedOrigins, ...envOrigins];
+  console.log('📝 CORS origins desde .env:', envOrigins);
+}
 
 const corsOptions = {
   origin: function(origin, callback) {
