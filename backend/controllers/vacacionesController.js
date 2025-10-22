@@ -1,10 +1,11 @@
 const db = require('../config/db');
 const { logError } = require('../utils/errorLogger');
-const { 
-  calcularDiasPorAntiguedad, 
-  calcularAntiguedad, 
+const { logger } = require('../utils/secureLogger');
+const {
+  calcularDiasPorAntiguedad,
+  calcularAntiguedad,
   validarSolicitudVacaciones,
-  verificarRequisitosMínimos 
+  verificarRequisitosMínimos
 } = require('../utils/vacacionesUtils');
 
 const vacacionesController = {
@@ -868,20 +869,30 @@ const vacacionesController = {
   // Asignar vacaciones para el próximo período (proceso anual)
   asignarVacacionesProximoPeriodo(req, res) {
     try {
-      console.log('🔍 Iniciando asignarVacacionesProximoPeriodo');
-      console.log('📋 Datos recibidos:', req.body);
-      console.log('👤 Usuario:', req.user);
-      
       const { anio_destino } = req.body;
-      
+
+      logger.info('🔍 Iniciando asignarVacacionesProximoPeriodo', {
+        userId: req.user?.id,
+        userRole: req.user?.rol,
+        anioDestino: anio_destino,
+        ip: req.ip
+      });
+
       if (!anio_destino || anio_destino <= new Date().getFullYear()) {
-        console.log('❌ Año inválido:', anio_destino);
-        return res.status(400).json({ 
-          error: 'Debe especificar un año futuro válido' 
+        logger.info('❌ Año inválido para asignación de vacaciones', {
+          anioDestino: anio_destino,
+          anioActual: new Date().getFullYear(),
+          userId: req.user?.id
+        });
+        return res.status(400).json({
+          error: 'Debe especificar un año futuro válido'
         });
       }
 
-      console.log(`🚀 Iniciando asignación de vacaciones para el año ${anio_destino}...`);
+      logger.info(`🚀 Iniciando asignación de vacaciones para el año ${anio_destino}`, {
+        anioDestino: anio_destino,
+        userId: req.user?.id
+      });
 
       // Verificar si ya existen asignaciones para ese año
       const verificarQuery = `

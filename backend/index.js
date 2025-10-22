@@ -1,8 +1,14 @@
 require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const { apiLimiter } = require('./middlewares/rateLimiter');
+const helmetConfig = require('./config/helmet');
 const app = express();
+
+// Headers de seguridad con Helmet
+// Protección contra XSS, clickjacking, sniffing, etc.
+app.use(helmetConfig());
 
 // Configuración CORS para producción
 // Permite definir CORS_ORIGIN como una lista separada por comas en el entorno
@@ -70,12 +76,19 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Cookie parser para leer cookies HttpOnly en autenticación
+app.use(cookieParser());
+
 // Rate limiting general para toda la API
 // Protección contra DoS y uso abusivo
 app.use('/api/', apiLimiter);
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// 🛡️ Límite de payload general: 1MB (protección contra DoS)
+// Antes: 50MB (peligroso - permite saturar servidor)
+// Después: 1MB (seguro para la mayoría de requests JSON/form)
+// Nota: uploads de archivos (multer) tienen límites configurados aparte (10MB)
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ limit: '1mb', extended: true }));
 
 // Servir archivos estáticos desde el directorio uploads con Content-Type correcto
 app.use('/uploads', (req, res, next) => {

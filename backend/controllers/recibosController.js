@@ -122,21 +122,38 @@ const createHistoryRecord = (importData) => {
 };
 
 // Función para actualizar el historial
+// Whitelist de columnas permitidas para prevenir SQL injection
+const ALLOWED_HISTORY_COLUMNS = [
+  'estado_importacion',
+  'fecha_fin',
+  'tiempo_procesamiento',
+  'registros_procesados',
+  'registros_exitosos',
+  'registros_fallidos',
+  'observaciones'
+];
+
 const updateHistoryRecord = (importID, updates) => {
   return new Promise((resolve, reject) => {
     const fields = [];
     const values = [];
-    
+
     Object.keys(updates).forEach(key => {
+      // Validación de seguridad: solo permitir columnas en whitelist
+      if (!ALLOWED_HISTORY_COLUMNS.includes(key)) {
+        console.warn(`⚠️  Attempted to update non-whitelisted column: ${key}`);
+        return; // Skip columna no permitida
+      }
+
       fields.push(`${key} = ?`);
       values.push(updates[key]);
     });
-    
+
     if (fields.length === 0) return resolve();
-    
+
     values.push(importID);
     const sql = `UPDATE historial_importaciones_recibos SET ${fields.join(', ')}, updated_at = NOW() WHERE importID = ?`;
-    
+
     db.query(sql, values, (err, result) => {
       if (err) reject(err);
       else resolve(result);

@@ -3,7 +3,15 @@ const router = express.Router();
 const empresasController = require('../controllers/empresasController');
 const { verifyToken } = require('../middlewares/verifyToken');
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+
+// 🛡️ Configuración de multer con límites de seguridad para imágenes
+const upload = multer({
+  dest: 'uploads/',
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB máximo por imagen (logo/firma)
+    files: 2 // Máximo 2 archivos (logo + firma)
+  }
+});
 
 // Obtener todas las empresas (solo admins)
 router.get('/', verifyToken, empresasController.getEmpresas);

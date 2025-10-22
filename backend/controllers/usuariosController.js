@@ -18,6 +18,8 @@ exports.miLegajo = (req, res) => {
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const { logError } = require('../utils/errorLogger');
+const { logger } = require('../utils/secureLogger');
+const { validatePassword } = require('../utils/passwordValidator');
 
 
 
@@ -90,10 +92,14 @@ exports.crearUsuario = async (req, res) => {
 
   if (!password || String(password).trim().length === 0) {
     errores.push('Contraseña es obligatoria');
-  } else if (String(password).trim().length < 6) {
-    errores.push('Contraseña debe tener al menos 6 caracteres');
   } else if (String(password).trim().length > 255) {
     errores.push('Contraseña no puede tener más de 255 caracteres');
+  } else {
+    // 🛡️ Validación robusta de contraseña (8 chars, mayúscula, minúscula, número)
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      errores.push(...passwordValidation.errors);
+    }
   }
 
   if (!rol || String(rol).trim().length === 0) {
@@ -583,18 +589,26 @@ const convertirFechaExcel = (numeroSerie) => {
 };
 
 exports.importarUsuariosMasivo = async (req, res) => {
-  console.log('🔥 Recibida petición de importación masiva');
-  console.log('📦 Body recibido:', req.body);
-  console.log('👤 Usuario:', req.user);
-  
+  // ⚠️ NO loguear req.body - contiene contraseñas de usuarios nuevos
+  logger.info('🔥 Recibida petición de importación masiva', {
+    userId: req.user?.id,
+    userRole: req.user?.rol,
+    ip: req.ip
+  });
+
   const { usuarios } = req.body;
 
   if (!usuarios || !Array.isArray(usuarios) || usuarios.length === 0) {
-    console.log('❌ Error: Array de usuarios vacío o inválido');
+    logger.info('❌ Error: Array de usuarios vacío o inválido', {
+      userId: req.user?.id
+    });
     return res.status(400).json({ error: 'Debe proporcionar un array de usuarios' });
   }
 
-  console.log(`📊 Procesando ${usuarios.length} usuarios`);
+  logger.info(`📊 Procesando ${usuarios.length} usuarios`, {
+    cantidad: usuarios.length,
+    userId: req.user?.id
+  });
 
   const resultados = {
     exitosos: 0,
@@ -656,10 +670,14 @@ exports.importarUsuariosMasivo = async (req, res) => {
       errores.push('Contraseña es obligatoria');
     } else if (password === 'undefined' || password === 'null') {
       errores.push('Contraseña tiene un valor inválido');
-    } else if (password.length < 6) {
-      errores.push('Contraseña debe tener al menos 6 caracteres');
     } else if (password.length > 255) {
       errores.push('Contraseña no puede tener más de 255 caracteres');
+    } else {
+      // 🛡️ Validación robusta de contraseña (8 chars, mayúscula, minúscula, número)
+      const passwordValidation = validatePassword(password);
+      if (!passwordValidation.valid) {
+        errores.push(...passwordValidation.errors);
+      }
     }
 
     // Validar rol

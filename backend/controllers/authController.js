@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const db = require('../config/db');
+const { validatePassword } = require('../utils/passwordValidator');
 
 exports.login = (req, res) => {
   const { dni, password } = req.body;
@@ -33,8 +34,20 @@ exports.login = (req, res) => {
         { expiresIn: '50m' }
       );
 
+      // 🔐 Configurar cookie HttpOnly segura
+      const isProduction = process.env.NODE_ENV === 'production';
+      res.cookie('authToken', token, {
+        httpOnly: true,     // NO accesible desde JavaScript (protección XSS)
+        secure: isProduction, // Solo HTTPS en producción
+        sameSite: 'lax',    // Protección CSRF moderada (permite navegación normal)
+        maxAge: 50 * 60 * 1000, // 50 minutos (igual que el token JWT)
+        path: '/'           // Cookie disponible en toda la app
+      });
+
+      // También enviar token en JSON para compatibilidad durante migración
+      // TODO: Remover "token" del response una vez que el frontend use solo cookies
       res.json({
-        token,
+        token, // ⚠️ DEPRECADO - Solo para compatibilidad, remover en futuro
         rol: usuario.rol,
         nombre: usuario.nombre,
         apellido: usuario.apellido,
@@ -48,12 +61,36 @@ exports.login = (req, res) => {
   });
 };
 
+exports.logout = (req, res) => {
+  // Limpiar cookie de autenticación
+  res.clearCookie('authToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/'
+  });
+
+  res.json({
+    success: true,
+    message: 'Logout exitoso'
+  });
+};
+
 exports.resetPassword = (req, res) => {
   const { userId } = req.params;
   const { nuevaPassword } = req.body;
 
   if (!nuevaPassword) {
     return res.status(400).json({ error: 'La contraseña es obligatoria' });
+  }
+
+  // 🛡️ Validar fortaleza de la contraseña
+  const passwordValidation = validatePassword(nuevaPassword);
+  if (!passwordValidation.valid) {
+    return res.status(400).json({
+      error: 'Contraseña no cumple con los requisitos de seguridad',
+      detalles: passwordValidation.errors
+    });
   }
 
   const saltRounds = 10;

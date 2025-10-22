@@ -3,7 +3,16 @@ const express = require('express');
 const router = express.Router();
 const recibosController = require('../controllers/recibosController');
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+
+// 🛡️ Configuración de multer con límites de seguridad
+const upload = multer({
+  dest: 'uploads/',
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB máximo por archivo
+    files: 1 // Solo 1 archivo por request
+  }
+});
+
 const { verifyToken } = require('../middlewares/verifyToken');
 
 // Obtener HTML del recibo para el usuario autenticado y periodo
