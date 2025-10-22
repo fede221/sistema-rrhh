@@ -81,8 +81,12 @@ app.use(cookieParser());
 // Protección contra DoS y uso abusivo
 app.use('/api/', apiLimiter);
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// 🛡️ Límite de payload general: 1MB (protección contra DoS)
+// Antes: 50MB (peligroso - permite saturar servidor)
+// Después: 1MB (seguro para la mayoría de requests JSON/form)
+// Nota: uploads de archivos (multer) tienen límites configurados aparte (10MB)
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ limit: '1mb', extended: true }));
 
 // Servir archivos estáticos desde el directorio uploads con Content-Type correcto
 app.use('/uploads', (req, res, next) => {

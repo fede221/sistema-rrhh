@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const db = require('../config/db');
+const { validatePassword } = require('../utils/passwordValidator');
 
 exports.login = (req, res) => {
   const { dni, password } = req.body;
@@ -81,6 +82,15 @@ exports.resetPassword = (req, res) => {
 
   if (!nuevaPassword) {
     return res.status(400).json({ error: 'La contraseña es obligatoria' });
+  }
+
+  // 🛡️ Validar fortaleza de la contraseña
+  const passwordValidation = validatePassword(nuevaPassword);
+  if (!passwordValidation.valid) {
+    return res.status(400).json({
+      error: 'Contraseña no cumple con los requisitos de seguridad',
+      detalles: passwordValidation.errors
+    });
   }
 
   const saltRounds = 10;

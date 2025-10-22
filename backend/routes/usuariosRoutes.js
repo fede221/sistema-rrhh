@@ -3,10 +3,12 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, verifyAdminRRHH, verifySuperadmin } = require('../middlewares/verifyToken');
 const usuariosController = require('../controllers/usuariosController');
+const { validateCreateUser } = require('../middlewares/validators');
 
 router.get('/', verifyToken, usuariosController.listarUsuarios);
 
-router.post('/', verifyToken, usuariosController.crearUsuario);
+// Crear usuario con validación centralizada
+router.post('/', verifyToken, validateCreateUser, usuariosController.crearUsuario);
 
 router.put('/:id', verifyToken, usuariosController.editarUsuario);
 
