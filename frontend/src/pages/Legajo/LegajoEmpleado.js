@@ -13,6 +13,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { getToken } from '../../utils/auth';
 
 const LegajoEmpleado = () => {
+  console.log('🔍 LegajoEmpleado cargado - versión con edición');
   const [legajo, setLegajo] = useState(null);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [datosEditables, setDatosEditables] = useState({});
