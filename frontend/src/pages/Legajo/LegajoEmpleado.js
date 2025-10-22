@@ -170,7 +170,7 @@ const LegajoEmpleado = () => {
           </Avatar>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
-              {legajo.nombre} {legajo.apellido}
+              {legajo.nombre} {legajo.apellido} ⭐ VERSIÓN NUEVA
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">
               Legajo: {legajo.legajo} | DNI: {legajo.nro_documento}
@@ -181,9 +181,9 @@ const LegajoEmpleado = () => {
               variant="contained"
               startIcon={<EditIcon />}
               onClick={handleEditarClick}
-              sx={{ bgcolor: '#1976d2' }}
+              sx={{ bgcolor: '#ff0000', fontSize: '20px', padding: '15px 30px' }}
             >
-              Editar
+              ⭐ EDITAR DATOS ⭐
             </Button>
           )}
         </Box>
