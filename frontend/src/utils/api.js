@@ -2,9 +2,9 @@
 import secureStorage from './secureStorage';
 
 const getApiBaseUrl = () => {
-  // Si estamos en producción, usar la URL relativa
+  // Si estamos en producción, usar la URL relativa vacía (nginx agrega /api)
   if (process.env.NODE_ENV === 'production') {
-    return '/api';
+    return '';
   }
   
   // En desarrollo, detectar si estamos accediendo desde otra máquina

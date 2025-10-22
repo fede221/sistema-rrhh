@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import secureStorage from '../utils/secureStorage';
 import {
   Box,
@@ -19,11 +19,25 @@ import {
 import { getUser } from '../utils/auth';
 
 const BienvenidaEmpleado = () => {
+  const [legajo, setLegajo] = useState(null);
   const user = getUser();
-  
-  // Obtener información adicional desde secureStorage
-  const dni = secureStorage.getItem('userDni') || 'No disponible';
-  const cuil = secureStorage.getItem('userCuil') || 'No disponible';
+  useEffect(() => {
+    const fetchLegajo = async () => {
+      try {
+        const token = secureStorage.getItem('token');
+        const res = await fetch('/api/usuarios/mi-legajo', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setLegajo(data);
+        }
+      } catch (err) {
+        setLegajo(null);
+      }
+    };
+    fetchLegajo();
+  }, []);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -74,13 +88,18 @@ const BienvenidaEmpleado = () => {
           <WavingHandIcon sx={{ fontSize: 48, mr: 1 }} />
         </Box>
         <Typography variant="h4" gutterBottom>
-          {getGreeting()}, {user?.nombre || 'Usuario'}!
+          {getGreeting()}, {legajo?.nombre || user?.nombre || 'Usuario'}!
         </Typography>
         <Typography variant="h6" sx={{ opacity: 0.9 }}>
           Bienvenido al Sistema de Recursos Humanos
         </Typography>
         <Typography variant="body1" sx={{ mt: 2, opacity: 0.8 }}>
-          {formatDate(new Date())}
+          {new Date().toLocaleDateString('es-AR', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}
         </Typography>
       </Paper>
 
@@ -103,31 +122,33 @@ const BienvenidaEmpleado = () => {
                   Nombre Completo
                 </Typography>
                 <Typography variant="body1" fontWeight="bold">
-                  {user?.nombre} {user?.apellido}
+                  {legajo?.nombre && legajo?.apellido 
+                    ? `${legajo.nombre} ${legajo.apellido}` 
+                    : user?.nombreCompleto || 'No disponible'}
                 </Typography>
               </Box>
               <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Email
-                </Typography>
-                <Typography variant="body1">
-                  No disponible
-                </Typography>
+                <Typography variant="body2" color="text.secondary">Email</Typography>
+                <Typography variant="body1">{legajo?.email_personal || 'No disponible'}</Typography>
               </Box>
               <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  DNI
-                </Typography>
-                <Typography variant="body1">
-                  {dni}
-                </Typography>
+                <Typography variant="body2" color="text.secondary">DNI</Typography>
+                <Typography variant="body1">{legajo?.nro_documento || 'No disponible'}</Typography>
               </Box>
               <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  CUIL
-                </Typography>
+                <Typography variant="body2" color="text.secondary">CUIL</Typography>
+                <Typography variant="body1">{legajo?.cuil || 'No disponible'}</Typography>
+              </Box>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary">Domicilio</Typography>
+                <Typography variant="body1">{legajo?.domicilio || 'No disponible'}</Typography>
+              </Box>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary">Localidad</Typography>
                 <Typography variant="body1">
-                  {cuil}
+                  {legajo?.localidad && legajo?.cp 
+                    ? `${legajo.localidad} (CP: ${legajo.cp})` 
+                    : legajo?.localidad || 'No disponible'}
                 </Typography>
               </Box>
             </CardContent>
@@ -151,7 +172,23 @@ const BienvenidaEmpleado = () => {
                   Rol
                 </Typography>
                 <Typography variant="body1" fontWeight="bold">
-                  Empleado
+                  {user?.rol || 'Empleado'}
+                </Typography>
+              </Box>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Fecha de Ingreso
+                </Typography>
+                <Typography variant="body1">
+                  {legajo?.fecha_ingreso ? formatDate(legajo.fecha_ingreso) : 'No disponible'}
+                </Typography>
+              </Box>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Número de Legajo
+                </Typography>
+                <Typography variant="body1" fontWeight="bold">
+                  {legajo?.numero_legajo || 'No disponible'}
                 </Typography>
               </Box>
               <Box sx={{ mb: 2 }}>
@@ -159,7 +196,7 @@ const BienvenidaEmpleado = () => {
                   Estado
                 </Typography>
                 <Typography variant="body1" color="success.main" fontWeight="bold">
-                  Activo
+                  {legajo?.activo === 1 || legajo?.activo === true ? 'Activo' : 'Inactivo'}
                 </Typography>
               </Box>
               <Box sx={{ mb: 2 }}>
@@ -167,7 +204,7 @@ const BienvenidaEmpleado = () => {
                   Empresa
                 </Typography>
                 <Typography variant="body1">
-                  Sistema RRHH
+                  {legajo?.empresa || 'No disponible'}
                 </Typography>
               </Box>
             </CardContent>

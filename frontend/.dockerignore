@@ -1,10 +1,12 @@
 node_modules
 npm-debug.log
-Dockerfile
-.dockerignore
+.env
+.env.local
+.env.production
 .git
 .gitignore
+README.md
+.DS_Store
+*.log
 build
-coverage
-.nyc_output
-.vscode
+.cache

@@ -264,10 +264,41 @@ exports.generarReciboHTML = async (req, res) => {
         
         // Generar HTML con múltiples empresas
         let htmlCompleto = '';
-        Object.keys(recibosPorEmpresa).forEach((empresaNombre, index) => {
+        const empresaDataArray = []; // Para modo debug
+        const empresaKeys = Object.keys(recibosPorEmpresa);
+        empresaKeys.forEach((empresaNombre, index) => {
           const recibosEmpresa = recibosPorEmpresa[empresaNombre];
           const r = recibosEmpresa[0]; // Tomar el primer recibo como referencia
+
+          // LOG: Mostrar todos los conceptos disponibles
+          console.log('========================================');
+          console.log(`EMPRESA: ${empresaNombre}`);
+          console.log(`Total de conceptos: ${recibosEmpresa.length}`);
+          console.log('Conceptos disponibles:');
+          recibosEmpresa.forEach((concepto, idx) => {
+            console.log(`  [${idx}] ConcDescr: "${concepto.ConcDescr}" | ConcImpHabCRet: ${concepto.ConcImpHabCRet}`);
+          });
+
+          // Buscar el concepto "Basico" para obtener el sueldo correcto
+          const conceptoBasico = recibosEmpresa.find(concepto => 
+            concepto.ConcDescr && 
+            (concepto.ConcDescr.toLowerCase().includes('basico') || 
+             concepto.ConcDescr.toLowerCase().includes('básico') ||
+             concepto.ConcDescr.toLowerCase().includes('sueldo'))
+          );
+          const sueldoBasico = conceptoBasico ? conceptoBasico.ConcImpHabCRet : 0;
           
+          // LOG: Resultado de la búsqueda
+          console.log('Búsqueda de concepto Básico:');
+          if (conceptoBasico) {
+            console.log(`  ✓ ENCONTRADO - ConcDescr: "${conceptoBasico.ConcDescr}"`);
+            console.log(`  ✓ ConcImpHabCRet: ${conceptoBasico.ConcImpHabCRet}`);
+            console.log(`  ✓ sueldoBasico asignado: ${sueldoBasico}`);
+          } else {
+            console.log('  ✗ NO ENCONTRADO - sueldoBasico será 0');
+          }
+          console.log('========================================');
+
           const data = {
             empresa: {
               nombre: r.empresa_nombre,
@@ -281,7 +312,7 @@ exports.generarReciboHTML = async (req, res) => {
               legajo: r.Legajo,
               nombre: r.Nombre,
               cuil: r.CUIL,
-              sueldo: r.ConcImpHabCRet,
+              sueldo: sueldoBasico,
               ingreso: r.FecIngreso,
               antiguedad: r.FecBaseAnt,
               egreso: r.FecEgreso,
@@ -293,22 +324,64 @@ exports.generarReciboHTML = async (req, res) => {
             recibos: recibosEmpresa,
             esMultiEmpresa: true,
             numeroEmpresa: index + 1,
-            totalEmpresas: Object.keys(recibosPorEmpresa).length
+            totalEmpresas: empresaKeys.length,
+            _debug: {
+              conceptoBasico: conceptoBasico ? conceptoBasico.ConcDescr : null,
+              sueldoBasico: sueldoBasico,
+              matchedRow: conceptoBasico || null
+            }
           };
-          
+
+          empresaDataArray.push(data);
+
           htmlCompleto += reciboTemplate(data);
-          
+
           // Agregar salto de página entre empresas (excepto la última)
-          if (index < Object.keys(recibosPorEmpresa).length - 1) {
+          if (index < empresaKeys.length - 1) {
             htmlCompleto += '<div style="page-break-after: always;"></div>';
           }
         });
-        
+
+        // Si se solicita modo debug, devolver JSON con los datos por empresa
+        if (req.query && req.query.debug === '1') {
+          return res.json({ empresas: empresaDataArray });
+        }
+
         res.set('Content-Type', 'text/html');
         res.send(htmlCompleto);
       } else {
         // Un solo recibo o legajo específico
         const r = results[0];
+        
+        // LOG: Mostrar todos los conceptos disponibles
+        console.log('========================================');
+        console.log('RECIBO ÚNICO (o legajo específico)');
+        console.log(`Total de filas: ${results.length}`);
+        console.log('Conceptos disponibles:');
+        results.forEach((concepto, idx) => {
+          console.log(`  [${idx}] ConcDescr: "${concepto.ConcDescr}" | ConcImpHabCRet: ${concepto.ConcImpHabCRet}`);
+        });
+        
+        // Buscar el concepto "Basico" para obtener el sueldo correcto
+        const conceptoBasico = results.find(concepto => 
+          concepto.ConcDescr && 
+          (concepto.ConcDescr.toLowerCase().includes('basico') || 
+           concepto.ConcDescr.toLowerCase().includes('básico') ||
+           concepto.ConcDescr.toLowerCase().includes('sueldo'))
+        );
+        const sueldoBasico = conceptoBasico ? conceptoBasico.ConcImpHabCRet : 0;
+        
+        // LOG: Resultado de la búsqueda
+        console.log('Búsqueda de concepto Básico:');
+        if (conceptoBasico) {
+          console.log(`  ✓ ENCONTRADO - ConcDescr: "${conceptoBasico.ConcDescr}"`);
+          console.log(`  ✓ ConcImpHabCRet: ${conceptoBasico.ConcImpHabCRet}`);
+          console.log(`  ✓ sueldoBasico asignado: ${sueldoBasico}`);
+        } else {
+          console.log('  ✗ NO ENCONTRADO - sueldoBasico será 0');
+        }
+        console.log('========================================');
+        
         const data = {
           empresa: {
             nombre: r.empresa_nombre,
@@ -322,7 +395,7 @@ exports.generarReciboHTML = async (req, res) => {
             legajo: r.Legajo,
             nombre: r.Nombre,
             cuil: r.CUIL,
-            sueldo: r.ConcImpHabCRet,
+            sueldo: sueldoBasico,
             ingreso: r.FecIngreso,
             antiguedad: r.FecBaseAnt,
             egreso: r.FecEgreso,
@@ -335,6 +408,18 @@ exports.generarReciboHTML = async (req, res) => {
           esMultiEmpresa: false
         };
         
+        // Agregar info de depuración
+        data._debug = {
+          conceptoBasico: conceptoBasico ? conceptoBasico.ConcDescr : null,
+          sueldoBasico: sueldoBasico,
+          matchedRow: conceptoBasico || null,
+          rowsReturned: results.length
+        };
+
+        if (req.query && req.query.debug === '1') {
+          return res.json(data);
+        }
+
         const html = reciboTemplate(data);
         res.set('Content-Type', 'text/html');
         res.send(html);

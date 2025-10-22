@@ -2,11 +2,7 @@
 exports.miLegajo = (req, res) => {
   const usuarioId = req.user.id;
   const sql = `
-    SELECT l.*, u.legajo, u.nombre, u.apellido, u.dni as nro_documento, u.cuil
-    FROM legajos l
-    JOIN usuarios u ON l.usuario_id = u.id
-    WHERE l.usuario_id = ?
-    LIMIT 1
+    SELECT * FROM legajos WHERE usuario_id = ? LIMIT 1
   `;
   db.query(sql, [usuarioId], (err, results) => {
     if (err) {

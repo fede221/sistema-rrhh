@@ -4,7 +4,6 @@ const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const { verifyToken, verifyAdminRRHH, verifySuperadmin } = require('../middlewares/verifyToken');
 const preguntasController = require('../controllers/preguntasController');
-/*
 // ✅ Obtener preguntas secretas precargadas
 router.get('/preguntas-secretas', (req, res) => {
   db.query('SELECT * FROM preguntas', (err, result) => {
@@ -18,54 +17,34 @@ router.post('/guardar-respuestas', verifyToken, async (req, res) => {
   const { respuestas } = req.body;
   const userId = req.user.id;
 
+  console.log('🟡 Intentando guardar respuestas de seguridad');
+  console.log('Usuario ID:', userId);
+  console.log('Respuestas recibidas:', respuestas);
+
   try {
     for (const r of respuestas) {
+      if (!r.pregunta_id || !r.respuesta) {
+        console.error('❌ Respuesta inválida:', r);
+        return res.status(400).json({ error: 'Faltan datos en alguna respuesta' });
+      }
       const hashed = await bcrypt.hash(r.respuesta, 10);
-      await db.promise().query(
-        'INSERT INTO respuestas_usuarios (usuario_id, pregunta_id, respuesta_hash) VALUES (?, ?, ?)',
-        [userId, r.pregunta_id, hashed]
-      );
+      try {
+        await db.query(
+          'INSERT INTO respuestas_usuarios (usuario_id, pregunta_id, respuesta_hash) VALUES (?, ?, ?)',
+          [userId, r.pregunta_id, hashed]
+        );
+      } catch (dbErr) {
+        console.error('💥 Error SQL al insertar respuesta:', dbErr);
+        return res.status(500).json({ error: 'Error SQL al guardar respuesta', detalle: dbErr.message });
+      }
     }
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Error al guardar respuestas' });
+    console.error('💥 Error inesperado al guardar respuestas:', err);
+    res.status(500).json({ error: 'Error inesperado al guardar respuestas', detalle: err.message });
   }
 });
 
-// ✅ Validar respuestas para recuperación de contraseña
-router.post('/validar-preguntas', async (req, res) => {
-  const { dni, respuestas } = req.body;
-
-  try {
-    const [usuario] = await db.promise().query('SELECT id FROM usuarios WHERE dni = ?', [dni]);
-    if (!usuario.length) return res.status(404).json({ error: 'Usuario no encontrado' });
-
-    const userId = usuario[0].id;
-
-    const [registros] = await db.promise().query(
-      'SELECT pregunta_id, respuesta_hash FROM respuestas_usuarios WHERE usuario_id = ?',
-      [userId]
-    );
-
-    let respuestasValidas = 0;
-    for (const r of respuestas) {
-      const dbRespuesta = registros.find(x => x.pregunta_id === r.pregunta_id);
-      if (dbRespuesta && await bcrypt.compare(r.respuesta, dbRespuesta.respuesta_hash)) {
-        respuestasValidas++;
-      }
-    }
-
-    if (respuestasValidas >= 3) {
-      return res.json({ success: true, userId });
-    }
-
-    res.status(403).json({ error: 'Respuestas incorrectas' });
-  } catch (err) {
-    res.status(500).json({ error: 'Error en la validación' });
-  }
-});
-
-*/
 router.get('/verificar-preguntas/:id', preguntasController.verificarPreguntas);
 router.get('/listado', preguntasController.listadoPreguntas);
 router.post('/cargar-preguntas/:id', preguntasController.cargarPreguntasUsuario);

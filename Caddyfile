@@ -1,0 +1,40 @@
+rrhh.dbconsulting.com.ar {
+    # Caddy automáticamente obtiene certificados SSL de Let's Encrypt
+    
+    # Logs
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+    
+    # Proxy para archivos uploads
+    handle /uploads/* {
+        reverse_proxy backend:3001
+    }
+    
+    # Proxy para API
+    handle /api/* {
+        reverse_proxy backend:3001
+    }
+    
+    # Todo lo demás al frontend (React app)
+    handle {
+        reverse_proxy frontend:80
+    }
+    
+    # Headers de seguridad
+    header {
+        # Seguridad
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        
+        # Remover headers innecesarios
+        -Server
+    }
+    
+    # Comprimir respuestas
+    encode gzip
+}

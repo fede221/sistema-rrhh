@@ -1044,6 +1044,10 @@ const Recibos = () => {
     const subtotalHabSRet = conceptos.reduce((acc, r) => acc + (parseFloat(r.ConcImpHabSRet) || 0), 0);
     const subtotalRet = conceptos.reduce((acc, r) => acc + (parseFloat(r.ConcImpRet) || 0), 0);
     const neto = subtotalHabCRet + subtotalHabSRet - subtotalRet;
+    
+    // Obtener el valor del sueldo/jornal desde el primer concepto con Haberes C/Ret > 0
+    const primerConceptoHabCRet = conceptos.find(c => parseFloat(c.ConcImpHabCRet) > 0);
+    const sueldoJornal = primerConceptoHabCRet ? parseFloat(primerConceptoHabCRet.ConcImpHabCRet) : 0;
     // 4. Render HTML exacto
     const nombreEmpresa = empresaInfo?.empresa_nombre || registros[0]?.empresa_nombre || registros[0]?.empresa_razon_social || 'Compañía Integral de Alimentos SA';
     const direccionEmpresa = empresaInfo?.empresa_direccion || registros[0]?.empresa_direccion || 'Andrés Rolón 681, San Isidro. CP 1642. Buenos Aires';
@@ -1183,7 +1187,7 @@ const Recibos = () => {
               <td class="center bold" style="border-right: 1px solid var(--ink);">${registros[0]?.Legajo || ''}</td>
               <td colspan="2" class="bold" style="border-right: 1px solid var(--ink); font-size: var(--tiny);">${registros[0]?.Nombre || ''}</td>
               <td class="center" style="border-right: 1px solid var(--ink);">${registros[0]?.CUIL || ''}</td>
-              <td class="num">${parseFloat(registros[0]?.ConcImpHabCRet || registros[0]?.ConcImpHabSRet || 0).toLocaleString('es-AR', {minimumFractionDigits:2})}</td>
+              <td class="num">${sueldoJornal.toLocaleString('es-AR', {minimumFractionDigits:2})}</td>
             </tr>
             <tr style="border-top: 1px solid var(--ink);">
               <td style="text-align: center; text-transform: uppercase; font-size: var(--extra-tiny); border-right: 1px solid var(--ink); font-weight: bold;">Fecha Ingreso</td>

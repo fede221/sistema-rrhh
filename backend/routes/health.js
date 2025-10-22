@@ -4,8 +4,49 @@ const router = express.Router();
 const db = require('../config/db');
 const os = require('os');
 
-// Health check endpoint
-router.get('/health', (req, res) => {
+// Health check endpoint optimizado para Docker
+router.get('/health', async (req, res) => {
+  try {
+    // Health check rápido - solo verifica que el proceso esté vivo y la BD conectada
+    const startTime = Date.now();
+    
+    // Verificar conexión a la base de datos con timeout
+    const dbHealthPromise = db.checkHealth ? db.checkHealth() : 
+      new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('DB timeout')), 5000);
+        db.query('SELECT 1 as health', (err) => {
+          clearTimeout(timeout);
+          if (err) reject(err);
+          else resolve(true);
+        });
+      });
+    
+    const dbHealthy = await dbHealthPromise;
+    const responseTime = Date.now() - startTime;
+    
+    if (dbHealthy) {
+      // Respuesta mínima para health check de Docker
+      return res.status(200).json({
+        status: 'OK',
+        uptime: Math.floor(process.uptime()),
+        timestamp: new Date().toISOString(),
+        responseTime: `${responseTime}ms`
+      });
+    } else {
+      throw new Error('Database not healthy');
+    }
+  } catch (err) {
+    console.error('❌ Health check falló:', err.message);
+    return res.status(503).json({
+      status: 'ERROR',
+      error: err.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Endpoint detallado de salud (no usar para Docker healthcheck)
+router.get('/health/detailed', (req, res) => {
   const healthCheck = {
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),

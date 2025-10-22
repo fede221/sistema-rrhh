@@ -6,7 +6,7 @@
     "test": "node scripts/test-create-user-and-legajo.js",
     "dev": "nodemon index.js",
     "start": "node index.js",
-  "setup-admin": "node create-admin.js",
+    "setup-admin": "node create-admin.js",
     "start:pm2": "pm2 start ecosystem.config.js",
     "stop:pm2": "pm2 stop rrhh-backend",
     "restart:pm2": "pm2 restart rrhh-backend",

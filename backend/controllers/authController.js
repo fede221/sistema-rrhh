@@ -30,7 +30,7 @@ exports.login = (req, res) => {
           apodo: usuario.apodo || null
         },
         process.env.JWT_SECRET,
-        { expiresIn: '8h' }
+        { expiresIn: '50m' }
       );
 
       res.json({

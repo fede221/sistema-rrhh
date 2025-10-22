@@ -166,7 +166,7 @@ export default function Dashboard() {
                   variant="outlined" 
                   size="small" 
                   sx={{ mt: 2 }}
-                  onClick={() => navigate('/legajo')}
+                  onClick={() => navigate('/legajos')}
                 >
                   Ver Mi Legajo
                 </Button>

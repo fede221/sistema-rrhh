@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import secureStorage from '../../utils/secureStorage';
 import { apiRequest } from '../../utils/api';
+import Version from '../../components/Version';
 
 const Login = () => {
   const [dni, setDni] = useState('');
@@ -200,17 +201,33 @@ const handleSubmit = async (e) => {
             </Button>
 
             <Box sx={{ textAlign: 'center' }}>
-              <Button 
-                onClick={() => navigate('/reset-password')} 
-                size={isMobile ? "small" : "medium"}
-                sx={{ 
-                  color: '#1976d2',
-                  textTransform: 'none',
-                  fontSize: isMobile ? '0.875rem' : '1rem'
-                }}
-              >
-                ¿Olvidaste tu contraseña?
-              </Button>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
+                <Button 
+                  onClick={() => navigate('/reset-password')} 
+                  size={isMobile ? "small" : "medium"}
+                  sx={{ 
+                    color: '#1976d2',
+                    textTransform: 'none',
+                    fontSize: isMobile ? '0.875rem' : '1rem'
+                  }}
+                >
+                  ¿Olvidaste tu contraseña?
+                </Button>
+
+                <Button
+                  onClick={() => navigate('/reset-password')}
+                  size={isMobile ? "small" : "medium"}
+                  variant="outlined"
+                  sx={{
+                    color: '#1976d2',
+                    textTransform: 'none',
+                    fontSize: isMobile ? '0.875rem' : '1rem',
+                    borderColor: '#1976d2'
+                  }}
+                >
+                  Cambiar contraseña
+                </Button>
+              </Box>
             </Box>
           </form>
         </Paper>
@@ -238,6 +255,9 @@ const handleSubmit = async (e) => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Componente de versión en la esquina inferior derecha */}
+      <Version />
     </Container>
   );
 };

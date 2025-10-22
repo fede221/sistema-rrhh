@@ -6,22 +6,57 @@ const app = express();
 // Configuración CORS para producción
 // Permite definir CORS_ORIGIN como una lista separada por comas en el entorno,
 // por ejemplo: CORS_ORIGIN="https://rrhh.dbconsulting.com.ar,http://192.168.203.24:8080"
-let allowedOrigins = ['http://localhost:3000', 'http://localhost', 'https://rrhh.dbconsulting.com.ar'];
-if (process.env.CORS_ORIGIN) {
-  allowedOrigins = process.env.CORS_ORIGIN.split(',').map(s => s.trim()).filter(Boolean);
-}
+let allowedOrigins = [
+  'http://localhost:3002',
+  'http://localhost',
+  'http://127.0.0.1:3002',
+  'https://rrhh.dbconsulting.com.ar',
+  'http://rrhh.dbconsulting.com.ar',
+  'https://34.176.124.72',
+  'http://34.176.124.72'
+];
 
 const corsOptions = {
   origin: function(origin, callback) {
-    console.log('CORS request from origin:', origin);
-    console.log('Allowed origins:', allowedOrigins);
+    // Normalizar orígenes: quitar barra final, espacios, minúsculas
+    const normalize = o => (o ? o.trim().replace(/\/$/, '').toLowerCase() : o);
+    const normalizedOrigin = normalize(origin);
+    console.log('CORS request from origin:', origin, '| Normalized:', normalizedOrigin);
+    console.log('Allowed origins (exact list check still active for reference):', allowedOrigins);
+
     // Cuando el cliente no envía origin (ej. llamadas desde curl/postman), permitir
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS policy: origin not allowed'), false);
+
+    // Permitir por hostname, independientemente del puerto
+    const allowedHostnames = new Set([
+      'localhost',
+      '127.0.0.1',
+      'rrhh.dbconsulting.com.ar',
+      '34.176.124.72'
+    ]);
+    try {
+      const url = new URL(normalizedOrigin);
+      const isHttp = url.protocol === 'http:' || url.protocol === 'https:';
+      const isAllowedHost = allowedHostnames.has(url.hostname);
+      // Permitir cualquier IP en el rango 192.168.*.* para desarrollo en red local
+      const isLocalNetwork = /^192\.168\.\d{1,3}\.\d{1,3}$/.test(url.hostname);
+      if (isHttp && (isAllowedHost || isLocalNetwork)) {
+        console.log(`CORS: Origin permitido por hostname ${url.hostname}`);
+        return callback(null, true);
+      }
+    } catch (e) {
+      console.warn('CORS: No se pudo parsear el origin como URL, se intentará comparación exacta. Error:', e.message);
     }
+
+    // Fallback: lista exacta
+    const normalizedAllowed = allowedOrigins.map(normalize);
+    if (normalizedAllowed.includes(normalizedOrigin)) {
+      console.log('CORS: Origin permitido por lista exacta');
+      return callback(null, true);
+    }
+
+    console.error('CORS: Origin NO permitido:', origin);
+    return callback(new Error('CORS policy: origin not allowed'), false);
   },
   credentials: true,
   optionsSuccessStatus: 200

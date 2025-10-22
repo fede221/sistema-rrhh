@@ -22,8 +22,8 @@ const getApiBaseUrl = () => {
     }
   }
   
-  // En producción, usar ruta relativa
-  return '/api';
+  // En producción, usar ruta vacía (nginx agrega /api)
+  return '';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  backend:
+    image: elcheloide/sistema-rrhh-backend:latest
+    container_name: rrhh-backend
+    restart: unless-stopped
+    environment:
+      - DB_HOST=${DB_HOST:-34.176.128.94}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME:-RRHH}
+      - DB_PORT=${DB_PORT:-3306}
+      - JWT_SECRET=${JWT_SECRET}
+      - NODE_ENV=production
+      - PORT=3001
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - backend-logs:/app/logs
+    networks:
+      - rrhh-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    image: elcheloide/sistema-rrhh-frontend:latest
+    container_name: rrhh-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    networks:
+      - rrhh-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  rrhh-network:
+    driver: bridge
+
+volumes:
+  backend-logs:

@@ -1,36 +1,39 @@
-# Multi-stage build
-# Stage 1: Build the React app
-FROM node:18-alpine AS build
+# Multi-stage build for Frontend
+# Stage 1: Build
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copiar package.json y package-lock.json
+# Copiar package files
 COPY package*.json ./
 
 # Instalar dependencias
 RUN npm ci
 
-# Copiar el resto de los archivos
+# Copiar código fuente
 COPY . .
 
-# Build de la aplicación para producción con dominio
-ENV REACT_APP_API_URL=https://rrhh.dbconsulting.com.ar
+# Build para producción
 RUN npm run build
 
-# Stage 2: Serve the app with Caddy
-FROM caddy:2-alpine
+# Stage 2: Serve con nginx
+FROM nginx:alpine
 
-# Copiar los archivos build de la stage anterior
-COPY --from=build /app/build /usr/share/caddy
+# Instalar wget para healthcheck
+RUN apk add --no-cache wget
 
-# Copiar configuración de Caddy
-COPY Caddyfile /etc/caddy/Caddyfile
+# Copiar el build desde el stage anterior
+COPY --from=builder /app/build /usr/share/nginx/html
 
-# Crear directorio para logs
-RUN mkdir -p /var/log/caddy
+# Copiar configuración de nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Exponer puertos 80 y 443
-EXPOSE 80 443
+# Exponer puerto 80
+EXPOSE 80
 
-# Caddy se ejecuta automáticamente con la configuración
-CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:80 || exit 1
+
+# Nginx se inicia automáticamente
+CMD ["nginx", "-g", "daemon off;"]
