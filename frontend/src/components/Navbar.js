@@ -97,7 +97,7 @@ const Navbar = () => {
       if (tienePermiso('legajo', 'ver_propio')) {
         items.push({
           text: 'LEGAJO',
-          path: '/legajo',
+          path: '/legajos',
           icon: <AssignmentIcon />,
           show: true
         });
@@ -107,7 +107,7 @@ const Navbar = () => {
       if (tienePermiso('legajos', 'ver_todos')) {
         items.push({
           text: 'LEGAJOS',
-          path: '/legajos-admin',
+          path: '/legajos',
           icon: <AssignmentIcon />,
           show: true
         });
@@ -148,7 +148,7 @@ const Navbar = () => {
         items.push(
           {
             text: 'ERRORES',
-            path: '/errores-log',
+            path: '/errores',
             icon: <ErrorIcon />,
             show: true
           },
