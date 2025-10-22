@@ -49,6 +49,88 @@ exports.obtenerMiLegajo = (req, res) => {
   });
 };
 
+// 🆕 Actualizar datos personales del propio legajo (solo empleado)
+// Permite al empleado editar únicamente sus datos de contacto y domicilio
+exports.actualizarMisDatosPersonales = async (req, res) => {
+  try {
+    const usuario_id = req.user.id;
+
+    // Campos permitidos que el empleado puede editar
+    const camposPermitidos = [
+      'domicilio',
+      'localidad',
+      'codigo_postal',
+      'provincia',
+      'telefono_contacto',
+      'contacto_emergencia',
+      'email_personal',
+      'estado_civil',
+      'cuenta_bancaria',
+      'banco_destino',
+      'domicilio_calle',
+      'domicilio_nro',
+      'domicilio_piso',
+      'domicilio_dpto'
+    ];
+
+    // Filtrar solo los campos permitidos del body
+    const datosActualizacion = {};
+    for (const campo of camposPermitidos) {
+      if (req.body.hasOwnProperty(campo)) {
+        datosActualizacion[campo] = req.body[campo];
+      }
+    }
+
+    // Validar que haya al menos un campo para actualizar
+    if (Object.keys(datosActualizacion).length === 0) {
+      return res.status(400).json({
+        error: 'No se proporcionaron campos válidos para actualizar'
+      });
+    }
+
+    // Buscar el legajo del usuario
+    const legajo = await new Promise((resolve, reject) => {
+      db.query(
+        'SELECT id FROM legajos WHERE usuario_id = ?',
+        [usuario_id],
+        (err, results) => {
+          if (err) reject(err);
+          else resolve(results[0] || null);
+        }
+      );
+    });
+
+    if (!legajo) {
+      return res.status(404).json({ error: 'Legajo no encontrado' });
+    }
+
+    // Construir la query de actualización
+    const campos = Object.keys(datosActualizacion);
+    const valores = Object.values(datosActualizacion);
+    const setClause = campos.map(campo => `${campo} = ?`).join(', ');
+
+    await new Promise((resolve, reject) => {
+      db.query(
+        `UPDATE legajos SET ${setClause} WHERE id = ?`,
+        [...valores, legajo.id],
+        (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        }
+      );
+    });
+
+    res.json({
+      message: 'Datos personales actualizados exitosamente',
+      camposActualizados: campos
+    });
+
+  } catch (error) {
+    console.error('Error actualizando datos personales:', error);
+    res.status(500).json({ error: 'Error al actualizar datos personales' });
+  }
+};
+
 // Obtener todos los legajos (solo admin_rrhh o superadmin)
 exports.obtenerTodos = (req, res) => {
   const rol = req.user.rol;

@@ -5,6 +5,7 @@ const { verifyToken, verifyAdminRRHH, verifySuperadmin } = require('../middlewar
 
 // Rutas existentes
 router.get('/mi-legajo', verifyToken, legajosController.obtenerMiLegajo);
+router.put('/mi-legajo/datos-personales', verifyToken, legajosController.actualizarMisDatosPersonales);
 router.get('/', verifyToken, legajosController.obtenerTodos);
 router.get('/empresas', verifyToken, legajosController.obtenerEmpresas);
 
