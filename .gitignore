@@ -44,8 +44,6 @@ tmp/
 ehthumbs.db
 Thumbs.db
 
-# Docker
-# Permitir subir archivos .dockerignore (eran ignorados por error)
 
 
 # Archivos específicos del proyecto (solo carpetas de nivel raíz)
