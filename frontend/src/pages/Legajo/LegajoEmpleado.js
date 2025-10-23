@@ -196,16 +196,16 @@ const LegajoEmpleado = () => {
   );
 
   return (
-    <Box sx={{ p: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', minHeight: '100vh' }}>
+    <Box sx={{ p: 3, background: 'linear-gradient(90deg, #e3f2fd 0%, #fff 100%)', minHeight: '100vh' }}>
       <Zoom in={true} timeout={500}>
         <Paper
           elevation={8}
           sx={{
             p: 4,
-            maxWidth: 1100,
+            maxWidth: 800,
             margin: '0 auto',
             borderRadius: 4,
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+            background: '#ffffff'
           }}
         >
           {/* Header */}
@@ -283,7 +283,7 @@ const LegajoEmpleado = () => {
 
               <Grid container spacing={2.5}>
                 {/* Nombre */}
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   {modoEdicion ? (
                     <TextField
                       fullWidth
@@ -310,7 +310,7 @@ const LegajoEmpleado = () => {
                 </Grid>
 
                 {/* Apellido */}
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   {modoEdicion ? (
                     <TextField
                       fullWidth
@@ -337,17 +337,17 @@ const LegajoEmpleado = () => {
                 </Grid>
 
                 {/* DNI - Solo lectura */}
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   <CampoCard label="DNI" valor={legajo.nro_documento} icon={FingerprintIcon} color="#f50057" />
                 </Grid>
 
                 {/* CUIL - Solo lectura */}
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   <CampoCard label="CUIL" valor={legajo.cuil} icon={FingerprintIcon} color="#f50057" />
                 </Grid>
 
                 {/* Tipo Documento */}
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   {modoEdicion ? (
                     <FormControl fullWidth>
                       <InputLabel>Tipo de Documento</InputLabel>
@@ -372,7 +372,7 @@ const LegajoEmpleado = () => {
                 </Grid>
 
                 {/* Fecha Nacimiento */}
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   {modoEdicion ? (
                     <TextField
                       fullWidth
@@ -400,7 +400,7 @@ const LegajoEmpleado = () => {
                 </Grid>
 
                 {/* Sexo */}
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   {modoEdicion ? (
                     <FormControl fullWidth>
                       <InputLabel>Sexo</InputLabel>
@@ -424,7 +424,7 @@ const LegajoEmpleado = () => {
                 </Grid>
 
                 {/* Estado Civil */}
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   {modoEdicion ? (
                     <FormControl fullWidth>
                       <InputLabel>Estado Civil</InputLabel>
@@ -450,7 +450,7 @@ const LegajoEmpleado = () => {
                 </Grid>
 
                 {/* Nacionalidad */}
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   {modoEdicion ? (
                     <TextField
                       fullWidth
@@ -520,7 +520,7 @@ const LegajoEmpleado = () => {
                 </Grid>
 
                 {/* Localidad */}
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   {modoEdicion ? (
                     <TextField
                       fullWidth
@@ -546,7 +546,7 @@ const LegajoEmpleado = () => {
                 </Grid>
 
                 {/* Provincia */}
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   {modoEdicion ? (
                     <TextField
                       fullWidth
@@ -572,7 +572,7 @@ const LegajoEmpleado = () => {
                 </Grid>
 
                 {/* Código Postal */}
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   {modoEdicion ? (
                     <TextField
                       fullWidth
@@ -612,7 +612,7 @@ const LegajoEmpleado = () => {
 
               <Grid container spacing={2.5}>
                 {/* Teléfono */}
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12}>
                   {modoEdicion ? (
                     <TextField
                       fullWidth
@@ -639,7 +639,7 @@ const LegajoEmpleado = () => {
                 </Grid>
 
                 {/* Contacto Emergencia */}
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12}>
                   {modoEdicion ? (
                     <TextField
                       fullWidth
@@ -687,19 +687,19 @@ const LegajoEmpleado = () => {
               </Box>
 
               <Grid container spacing={2.5}>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   <CampoCard label="Fecha Ingreso" valor={formatFecha(legajo.fecha_ingreso)} icon={CalendarMonthIcon} color="#5c6bc0" />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   <CampoCard label="Centro de Costos" valor={legajo.centro_costos} icon={WorkIcon} color="#5c6bc0" />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   <CampoCard label="Tarea" valor={legajo.tarea_desempenada} icon={AssignmentIcon} color="#5c6bc0" />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   <CampoCard label="Banco" valor={legajo.banco_destino} icon={AccountBalanceIcon} color="#5c6bc0" />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12}>
                   <CampoCard label="Cuenta Bancaria" valor={legajo.cuenta_bancaria} icon={AccountBalanceIcon} color="#5c6bc0" />
                 </Grid>
               </Grid>
