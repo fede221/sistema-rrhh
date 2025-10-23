@@ -2,17 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const recibosController = require('../controllers/recibosController');
-const multer = require('multer');
-
-// 🛡️ Configuración de multer con límites de seguridad
-const upload = multer({
-  dest: 'uploads/',
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB máximo por archivo
-    files: 1 // Solo 1 archivo por request
-  }
-});
-
+const { documentUpload, handleMulterError } = require('../config/multer');
 const { verifyToken } = require('../middlewares/verifyToken');
 
 // Obtener HTML del recibo para el usuario autenticado y periodo
@@ -20,8 +10,8 @@ router.get('/html', verifyToken, recibosController.generarReciboHTML);
 
 // Ruta para importar recibos
 
-// Importar recibos
-router.post('/importar', verifyToken, upload.single('file'), recibosController.importarRecibos);
+// Importar recibos (con validación de tipo de archivo)
+router.post('/importar', verifyToken, documentUpload.single('file'), handleMulterError, recibosController.importarRecibos);
 
 // Consultar progreso
 router.get('/progreso', recibosController.getImportProgress);

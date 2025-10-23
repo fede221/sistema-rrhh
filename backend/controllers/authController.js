@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const db = require('../config/db');
 const { validatePassword } = require('../utils/passwordValidator');
+const { log } = require('../utils/logger');
 
 exports.login = (req, res) => {
   const { dni, password } = req.body;
@@ -96,17 +97,18 @@ exports.resetPassword = (req, res) => {
   const saltRounds = 10;
   bcrypt.hash(nuevaPassword, saltRounds, (err, hashedPassword) => {
     if (err) {
-      console.error('Error al hashear la nueva contraseña:', err);
+      log.error('Error al hashear la nueva contraseña', err, { userId });
       return res.status(500).json({ error: 'Error al cambiar la contraseña' });
     }
 
     const sql = 'UPDATE usuarios SET password = ? WHERE id = ?';
     db.query(sql, [hashedPassword, userId], (err, result) => {
       if (err) {
-        console.error('Error al actualizar la contraseña:', err);
+        log.error('Error al actualizar la contraseña', err, { userId });
         return res.status(500).json({ error: 'Error al cambiar la contraseña' });
       }
 
+      log.security('Contraseña actualizada exitosamente', { userId });
       res.json({ mensaje: '✅ Contraseña actualizada con éxito' });
     });
   });
@@ -120,7 +122,7 @@ exports.getRecoveryQuestions = (req, res) => {
   const sqlUsuario = 'SELECT id FROM usuarios WHERE dni = ?';
   db.query(sqlUsuario, [dni], (err, userResult) => {
     if (err) {
-      console.error('Error buscando usuario:', err);
+      log.error('Error buscando usuario', err, { dni });
       return res.status(500).json({ error: 'Error en la consulta' });
     }
 
@@ -141,7 +143,7 @@ exports.getRecoveryQuestions = (req, res) => {
 
     db.query(sqlPreguntas, [userId], (err, questions) => {
       if (err) {
-        console.error('Error obteniendo preguntas:', err);
+        log.error('Error obteniendo preguntas', err, { userId });
         return res.status(500).json({ error: 'Error obteniendo preguntas' });
       }
 
@@ -171,7 +173,7 @@ exports.validateRecoveryAnswers = async (req, res) => {
     
     db.query(sql, [userId], async (err, storedAnswers) => {
       if (err) {
-        console.error('Error obteniendo respuestas:', err);
+        log.error('Error obteniendo respuestas', err, { userId });
         return res.status(500).json({ error: 'Error en la consulta' });
       }
 
@@ -201,7 +203,7 @@ exports.validateRecoveryAnswers = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error validando respuestas:', error);
+    log.error('Error validando respuestas', error, { userId });
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

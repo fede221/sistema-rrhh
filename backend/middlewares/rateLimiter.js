@@ -1,5 +1,6 @@
 const rateLimit = require('express-rate-limit');
 const { ipKeyGenerator } = require('express-rate-limit');
+const { log } = require('../utils/logger');
 
 /**
  * Rate Limiter para protección contra ataques de fuerza bruta y DoS
@@ -22,7 +23,11 @@ const authLimiter = rateLimit({
   // Identificar por IP - usa ipKeyGenerator para soporte IPv6
   keyGenerator: ipKeyGenerator,
   handler: (req, res) => {
-    console.warn(`🚨 Rate limit excedido para IP: ${req.ip} en ruta: ${req.path}`);
+    log.security('🚨 Rate limit excedido', {
+      ip: req.ip,
+      path: req.path,
+      type: 'auth'
+    });
     res.status(429).json({
       error: 'Demasiados intentos de inicio de sesión',
       message: 'Has excedido el límite de intentos. Por favor, intenta nuevamente más tarde.',
@@ -44,7 +49,10 @@ const passwordRecoveryLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: ipKeyGenerator,
   handler: (req, res) => {
-    console.warn(`🚨 Rate limit de recuperación excedido para IP: ${req.ip}`);
+    log.security('🚨 Rate limit de recuperación excedido', {
+      ip: req.ip,
+      type: 'password_recovery'
+    });
     res.status(429).json({
       error: 'Demasiados intentos de recuperación de contraseña',
       message: 'Has excedido el límite de intentos. Por seguridad, intenta nuevamente en 1 hora.',
@@ -67,7 +75,11 @@ const apiLimiter = rateLimit({
   skipSuccessfulRequests: false,
   keyGenerator: ipKeyGenerator,
   handler: (req, res) => {
-    console.warn(`🚨 Rate limit general excedido para IP: ${req.ip} en ruta: ${req.path}`);
+    log.security('🚨 Rate limit general excedido', {
+      ip: req.ip,
+      path: req.path,
+      type: 'api_general'
+    });
     res.status(429).json({
       error: 'Demasiadas solicitudes',
       message: 'Has excedido el límite de solicitudes permitidas. Por favor, intenta más tarde.',
@@ -90,7 +102,12 @@ const writeLimiter = rateLimit({
   skipSuccessfulRequests: false,
   keyGenerator: ipKeyGenerator,
   handler: (req, res) => {
-    console.warn(`🚨 Rate limit de escritura excedido para IP: ${req.ip} en ${req.method} ${req.path}`);
+    log.security('🚨 Rate limit de escritura excedido', {
+      ip: req.ip,
+      method: req.method,
+      path: req.path,
+      type: 'write_operations'
+    });
     res.status(429).json({
       error: 'Demasiadas operaciones de modificación',
       message: 'Has excedido el límite de operaciones permitidas. Por favor, intenta más tarde.',
@@ -112,7 +129,10 @@ const uploadLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: ipKeyGenerator,
   handler: (req, res) => {
-    console.warn(`🚨 Rate limit de uploads excedido para IP: ${req.ip}`);
+    log.security('🚨 Rate limit de uploads excedido', {
+      ip: req.ip,
+      type: 'file_uploads'
+    });
     res.status(429).json({
       error: 'Demasiados archivos cargados',
       message: 'Has excedido el límite de carga de archivos. Por favor, intenta nuevamente en 1 hora.',
@@ -131,7 +151,10 @@ const createCustomLimiter = (options = {}) => {
     legacyHeaders: false,
     keyGenerator: ipKeyGenerator,
     handler: (req, res) => {
-      console.warn(`🚨 Rate limit personalizado excedido para IP: ${req.ip}`);
+      log.security('🚨 Rate limit personalizado excedido', {
+        ip: req.ip,
+        type: 'custom'
+      });
       res.status(429).json(options.message || { error: 'Demasiadas solicitudes' });
     }
   });
