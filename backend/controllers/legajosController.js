@@ -1312,7 +1312,13 @@ exports.actualizarLegajo = async (req, res) => {
       }
     }
 
-    await legajoModel.actualizar(id, datosActualizacion);
+    // Use the existing model method 'actualizarPorId' (was calling non-existent 'actualizar')
+    await new Promise((resolve, reject) => {
+      legajoModel.actualizarPorId(id, datosActualizacion, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    });
 
     // Log de auditoría
     log.info('Legajo actualizado', {

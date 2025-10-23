@@ -193,14 +193,6 @@ const BienvenidaEmpleado = () => {
               </Box>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Estado
-                </Typography>
-                <Typography variant="body1" color="success.main" fontWeight="bold">
-                  {legajo?.activo === 1 || legajo?.activo === true ? 'Activo' : 'Inactivo'}
-                </Typography>
-              </Box>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">
                   Empresa
                 </Typography>
                 <Typography variant="body1">

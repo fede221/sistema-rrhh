@@ -20,7 +20,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu as MenuIcon,
   Logout as LogoutIcon,
-  AccountCircle as AccountCircleIcon,
   Dashboard as DashboardIcon,
   People as PeopleIcon,
   Receipt as ReceiptIcon,
@@ -55,6 +54,15 @@ const Navbar = () => {
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const getInitials = (user) => {
+    if (!user) return '';
+    const nombre = user.nombre || user.nombreCompleto || user.displayName || '';
+    const apellido = user.apellido || '';
+    const first = nombre ? nombre.trim().split(' ')[0].charAt(0).toUpperCase() : '';
+    const last = apellido ? apellido.trim().split(' ')[0].charAt(0).toUpperCase() : '';
+    return `${first}${last}` || (nombre ? nombre.trim().split(' ')[0].charAt(0).toUpperCase() : '');
   };
 
   const closeMobileMenu = () => {
@@ -272,7 +280,9 @@ const Navbar = () => {
                 minWidth: isMobile ? 'auto' : '200px'
               }}
             >
-              <AccountCircleIcon sx={{ mr: isMobile ? 0.5 : 1 }} />
+              <Box sx={{ bgcolor: '#e8f4ff', color: '#1976d2', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', mr: isMobile ? 0.5 : 1 }}>
+                <Typography sx={{ color: '#1976d2', fontWeight: 700 }}>{getInitials(user)}</Typography>
+              </Box>
               <Typography 
                 variant="body2"
                 sx={{ 

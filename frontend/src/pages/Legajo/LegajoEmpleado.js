@@ -7,7 +7,7 @@ import {
   Alert, Snackbar, MenuItem, Select, FormControl,
   Chip, Fade, Zoom
 } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
+// PersonIcon removed - using initials avatar
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -23,6 +23,12 @@ import ContactPhoneIcon from '@mui/icons-material/ContactPhone';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import { getToken } from '../../utils/auth';
+
+// Unified color scheme
+const primaryColor = '#1976d2';
+const headerGradientStart = '#667eea';
+const headerGradientEnd = '#764ba2';
+const iconBg = '#e8f4ff';
 
 const LegajoEmpleado = () => {
   const [legajo, setLegajo] = useState(null);
@@ -159,15 +165,26 @@ const LegajoEmpleado = () => {
     return fecha;
   };
 
+  // Helper para obtener iniciales (primera letra del primer nombre y primera letra del apellido)
+  const getInitials = (nombre = '', apellido = '') => {
+    try {
+      const first = nombre ? nombre.trim().split(' ')[0].charAt(0).toUpperCase() : '';
+      const last = apellido ? apellido.trim().split(' ')[0].charAt(0).toUpperCase() : '';
+      return `${first}${last}` || '';
+    } catch (e) {
+      return '';
+    }
+  };
+
   // CampoCard removed: using InfoRow for unified styling across the page
 
-  // Reusable row component: left label (blue), right value/input
-  const InfoRow = ({ label, campoKey, value, editable = false, type, options = [], icon: Icon, color = '#1976d2', index = 0 }) => (
+  // Reusable row component: left label (primaryColor), right value/input
+  const InfoRow = ({ label, campoKey, value, editable = false, type, options = [], icon: Icon, color = primaryColor, index = 0 }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', py: 2, px: 3, bgcolor: index % 2 === 0 ? 'white' : '#fbfdff', borderBottom: '1px solid #e6eef9' }}>
       <Box sx={{ width: 220, display: 'flex', alignItems: 'center' }}>
         {Icon && (
-          <Avatar sx={{ bgcolor: color, width: 32, height: 32, mr: 1.5 }}>
-            <Icon sx={{ fontSize: 18 }} />
+          <Avatar sx={{ bgcolor: iconBg, width: 32, height: 32, mr: 1.5 }}>
+            <Icon sx={{ fontSize: 18, color: color }} />
           </Avatar>
         )}
         <Typography sx={{ color: color, fontWeight: 700 }}>{label}</Typography>
@@ -212,58 +229,42 @@ const LegajoEmpleado = () => {
             alignItems: 'center',
             mb: 4,
             p: 3,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: primaryColor,
             borderRadius: 3,
             boxShadow: 3
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Avatar sx={{
                 bgcolor: 'white',
-                color: '#667eea',
+                color: primaryColor,
                 width: 70,
                 height: 70,
                 mr: 2,
-                boxShadow: 3
+                boxShadow: 3,
+                fontWeight: 'bold'
               }}>
-                <PersonIcon fontSize="large" />
+                <Typography sx={{ color: primaryColor, fontWeight: '700', fontSize: 28 }}>
+                  {getInitials(legajo.nombre, legajo.apellido)}
+                </Typography>
               </Avatar>
               <Box>
                 <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'white', mb: 0.5 }}>
                   {legajo.nombre} {legajo.apellido}
                 </Typography>
-                <Chip
-                  label={`Legajo: ${legajo.legajo}`}
-                  sx={{
-                    bgcolor: 'rgba(255,255,255,0.3)',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    backdropFilter: 'blur(10px)'
-                  }}
-                />
+                {legajo.legajo ? (
+                  <Chip
+                    label={`Legajo: ${legajo.legajo}`}
+                    sx={{
+                      bgcolor: 'rgba(255,255,255,0.3)',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      backdropFilter: 'blur(10px)'
+                    }}
+                  />
+                ) : null}
               </Box>
             </Box>
-            {!modoEdicion && (
-              <Button
-                variant="contained"
-                startIcon={<EditIcon />}
-                onClick={handleEditarClick}
-                size="large"
-                sx={{
-                  bgcolor: 'white',
-                  color: '#667eea',
-                  fontWeight: 'bold',
-                  px: 3,
-                  '&:hover': {
-                    bgcolor: '#f0f0f0',
-                    transform: 'scale(1.05)',
-                    boxShadow: 4
-                  },
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                Editar Datos
-              </Button>
-            )}
+            {/* header edit button removed - use the blue 'EDITAR DATOS PERSONALES' button below */}
           </Box>
 
           {/* Datos Personales (estilo tabla) */}
@@ -271,20 +272,20 @@ const LegajoEmpleado = () => {
             <Box sx={{ mb: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Avatar sx={{ bgcolor: '#e8f4ff', color: '#1976d2', mr: 2 }}>
+                  <Avatar sx={{ bgcolor: iconBg, color: primaryColor, mr: 2 }}>
                     <BadgeIcon />
                   </Avatar>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: primaryColor }}>
                     Datos Personales
                   </Typography>
                 </Box>
                 {!modoEdicion && (
-                  <Button
+                    <Button
                     variant="contained"
                     size="small"
                     onClick={handleEditarClick}
                     startIcon={<EditIcon />}
-                    sx={{ bgcolor: '#1976d2', textTransform: 'none' }}
+                    sx={{ bgcolor: primaryColor, textTransform: 'none' }}
                   >
                     EDITAR DATOS PERSONALES
                   </Button>
@@ -353,16 +354,16 @@ const LegajoEmpleado = () => {
           </Fade>
  
 
-          <Divider sx={{ my: 4, borderStyle: 'dashed', borderColor: '#667eea', opacity: 0.3 }} />
+          <Divider sx={{ my: 4, borderStyle: 'dashed', borderColor: primaryColor, opacity: 0.3 }} />
 
           {/* Domicilio */}
           <Fade in={true} timeout={1000}>
             <Box sx={{ mb: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Avatar sx={{ bgcolor: '#43a047', mr: 2, boxShadow: 2 }}>
+                <Avatar sx={{ bgcolor: iconBg, color: primaryColor, mr: 2, boxShadow: 2 }}>
                   <HomeIcon />
                 </Avatar>
-                <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#43a047' }}>
+                <Typography variant="h5" sx={{ fontWeight: 'bold', color: primaryColor }}>
                   Domicilio
                 </Typography>
               </Box>
@@ -380,16 +381,16 @@ const LegajoEmpleado = () => {
             </Box>
           </Fade>
 
-          <Divider sx={{ my: 4, borderStyle: 'dashed', borderColor: '#43a047', opacity: 0.3 }} />
+          <Divider sx={{ my: 4, borderStyle: 'dashed', borderColor: primaryColor, opacity: 0.3 }} />
 
           {/* Contacto */}
           <Fade in={true} timeout={1200}>
             <Box sx={{ mb: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Avatar sx={{ bgcolor: '#fb8c00', mr: 2, boxShadow: 2 }}>
+                <Avatar sx={{ bgcolor: iconBg, color: primaryColor, mr: 2, boxShadow: 2 }}>
                   <PhoneIcon />
                 </Avatar>
-                <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#fb8c00' }}>
+                <Typography variant="h5" sx={{ fontWeight: 'bold', color: primaryColor }}>
                   Contacto
                 </Typography>
               </Box>
@@ -405,22 +406,22 @@ const LegajoEmpleado = () => {
             </Box>
           </Fade>
 
-          <Divider sx={{ my: 4, borderStyle: 'dashed', borderColor: '#fb8c00', opacity: 0.3 }} />
+          <Divider sx={{ my: 4, borderStyle: 'dashed', borderColor: primaryColor, opacity: 0.3 }} />
 
           {/* Datos Laborales - Solo lectura */}
           <Fade in={true} timeout={1400}>
             <Box sx={{ mb: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Avatar sx={{ bgcolor: '#5c6bc0', mr: 2, boxShadow: 2 }}>
+                <Avatar sx={{ bgcolor: iconBg, color: primaryColor, mr: 2, boxShadow: 2 }}>
                   <WorkIcon />
                 </Avatar>
-                <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#5c6bc0' }}>
+                <Typography variant="h5" sx={{ fontWeight: 'bold', color: primaryColor }}>
                   Datos Laborales
                 </Typography>
                 <Chip
                   label="Solo lectura"
                   size="small"
-                  sx={{ ml: 2, bgcolor: '#e8eaf6', color: '#5c6bc0', fontWeight: 'bold' }}
+                  sx={{ ml: 2, bgcolor: iconBg, color: primaryColor, fontWeight: 'bold' }}
                 />
               </Box>
 
