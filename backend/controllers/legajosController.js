@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const legajoModel = require('../models/legajoModel');
+const { log } = require('../utils/logger');
 
 // Función para convertir fecha de Excel a formato YYYY-MM-DD
 const convertirFechaExcel = (numeroSerie) => {
@@ -1312,9 +1313,23 @@ exports.actualizarLegajo = async (req, res) => {
     }
 
     await legajoModel.actualizar(id, datosActualizacion);
+
+    // Log de auditoría
+    log.info('Legajo actualizado', {
+      usuario_id: user.id,
+      usuario_email: user.email,
+      legajo_id: id,
+      campos_actualizados: Object.keys(datosActualizacion),
+      es_admin: user.rol === 'admin' || user.rol === 'superadmin'
+    });
+
     res.json({ message: 'Legajo actualizado exitosamente' });
   } catch (error) {
-    console.error('Error actualizando legajo:', error);
+    log.error('Error actualizando legajo', error, {
+      usuario_id: req.user?.id,
+      usuario_email: req.user?.email,
+      legajo_id: req.params.id
+    });
     res.status(500).json({ error: 'Error al actualizar legajo' });
   }
 };
