@@ -1,9 +1,15 @@
 require('dotenv').config({ path: __dirname + '/.env' });
+
+// Validar variables de entorno ANTES de iniciar la aplicación
+const { validateEnvironment } = require('./config/validateEnv');
+validateEnvironment();
+
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { apiLimiter } = require('./middlewares/rateLimiter');
 const helmetConfig = require('./config/helmet');
+const { log } = require('./utils/logger');
 const app = express();
 
 // Headers de seguridad con Helmet
@@ -27,7 +33,7 @@ let allowedOrigins = [
 if (process.env.CORS_ORIGIN) {
   const envOrigins = process.env.CORS_ORIGIN.split(',').map(o => o.trim());
   allowedOrigins = [...allowedOrigins, ...envOrigins];
-  console.log('📝 CORS origins desde .env:', envOrigins);
+  log.startup('📝 CORS origins desde .env', { origins: envOrigins });
 }
 
 const corsOptions = {
@@ -35,8 +41,8 @@ const corsOptions = {
     // Normalizar orígenes: quitar barra final, espacios, minúsculas
     const normalize = o => (o ? o.trim().replace(/\/$/, '').toLowerCase() : o);
     const normalizedOrigin = normalize(origin);
-    console.log('CORS request from origin:', origin, '| Normalized:', normalizedOrigin);
-    console.log('Allowed origins (exact list check still active for reference):', allowedOrigins);
+    log.http('CORS request from origin', { origin, normalized: normalizedOrigin });
+    log.debug('Allowed origins check', { allowedOrigins });
 
     // Cuando el cliente no envía origin (ej. llamadas desde curl/postman), permitir
     if (!origin) return callback(null, true);
@@ -50,26 +56,46 @@ const corsOptions = {
     ]);
     try {
       const url = new URL(normalizedOrigin);
-      const isHttp = url.protocol === 'http:' || url.protocol === 'https:';
+      const isProduction = process.env.NODE_ENV === 'production';
+
+      // En producción, forzar HTTPS excepto para localhost
+      const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+      const isValidProtocol = isProduction && !isLocalhost
+        ? url.protocol === 'https:'  // Solo HTTPS en producción (excepto localhost)
+        : (url.protocol === 'http:' || url.protocol === 'https:'); // HTTP/HTTPS en desarrollo
+
       const isAllowedHost = allowedHostnames.has(url.hostname);
       // Permitir cualquier IP en el rango 192.168.*.* para desarrollo en red local
       const isLocalNetwork = /^192\.168\.\d{1,3}\.\d{1,3}$/.test(url.hostname);
-      if (isHttp && (isAllowedHost || isLocalNetwork)) {
-        console.log(`CORS: Origin permitido por hostname ${url.hostname}`);
+
+      if (isValidProtocol && (isAllowedHost || isLocalNetwork)) {
+        log.debug('CORS: Origin permitido por hostname', {
+          hostname: url.hostname,
+          protocol: url.protocol,
+          isProduction
+        });
         return callback(null, true);
       }
+
+      // Si el protocolo no es válido en producción, loguear warning
+      if (isProduction && !isLocalhost && url.protocol !== 'https:') {
+        log.security('CORS: HTTP bloqueado en producción', {
+          origin,
+          protocol: url.protocol
+        });
+      }
     } catch (e) {
-      console.warn('CORS: No se pudo parsear el origin como URL, se intentará comparación exacta. Error:', e.message);
+      log.warn('CORS: No se pudo parsear el origin como URL', { error: e.message });
     }
 
     // Fallback: lista exacta
     const normalizedAllowed = allowedOrigins.map(normalize);
     if (normalizedAllowed.includes(normalizedOrigin)) {
-      console.log('CORS: Origin permitido por lista exacta');
+      log.debug('CORS: Origin permitido por lista exacta');
       return callback(null, true);
     }
 
-    console.error('CORS: Origin NO permitido:', origin);
+    log.security('CORS: Origin NO permitido', { origin });
     return callback(new Error('CORS policy: origin not allowed'), false);
   },
   credentials: true,
@@ -85,12 +111,12 @@ app.use(cookieParser());
 // Protección contra DoS y uso abusivo
 app.use('/api/', apiLimiter);
 
-// 🛡️ Límite de payload general: 1MB (protección contra DoS)
+// 🛡️ Límite de payload general: 5MB (balanceado para formularios complejos)
 // Antes: 50MB (peligroso - permite saturar servidor)
-// Después: 1MB (seguro para la mayoría de requests JSON/form)
+// Ahora: 5MB (seguro para formularios complejos como legajos)
 // Nota: uploads de archivos (multer) tienen límites configurados aparte (10MB)
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ limit: '1mb', extended: true }));
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 // Servir archivos estáticos desde el directorio uploads con Content-Type correcto
 app.use('/uploads', (req, res, next) => {
@@ -127,4 +153,10 @@ app.use('/api', require('./routes/health')); // Agregar health check
 
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
-app.listen(PORT, HOST, () => console.log(`🚀 Backend escuchando en http://${HOST}:${PORT}`));
+app.listen(PORT, HOST, () => {
+  log.startup(`🚀 Backend escuchando en http://${HOST}:${PORT}`, {
+    port: PORT,
+    host: HOST,
+    env: process.env.NODE_ENV || 'development'
+  });
+});
