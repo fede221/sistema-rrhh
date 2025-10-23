@@ -1,11 +1,12 @@
 import { API_BASE_URL } from '../../config';
 // src/pages/Login/ResetPassword.js
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, TextField, Button,
-  Snackbar, Alert, Modal
+  Snackbar, Alert, Modal, List, ListItem, ListItemIcon, ListItemText, Popper, Paper, ClickAwayListener
 } from '@mui/material';
+import { CheckCircleOutline, Cancel as CancelIcon } from '@mui/icons-material';
 import axios from 'axios';
 
 
@@ -20,7 +21,20 @@ const ResetPassword = () => {
   const [confirmarPassword, setConfirmarPassword] = useState('');
   const [userId, setUserId] = useState(null);
   const [mostrarModalPassword, setMostrarModalPassword] = useState(false);
+  const [passwordChecks, setPasswordChecks] = useState({ length: false, upper: false, lower: false, number: false, nospace: true });
+  const passwordAnchorRef = useRef(null);
+  const [showPasswordChecklist, setShowPasswordChecklist] = useState(false);
   const navigate = useNavigate();
+
+  const evaluatePassword = (pw) => {
+    const pwd = String(pw || '');
+    const length = pwd.length >= 8;
+    const upper = /[A-Z]/.test(pwd);
+    const lower = /[a-z]/.test(pwd);
+    const number = /[0-9]/.test(pwd);
+    const nospace = !/\s/.test(pwd);
+    return { length, upper, lower, number, nospace };
+  };
 
 const handleVerificarPreguntas = async () => {
   if (!dni) {
@@ -97,8 +111,18 @@ const handleCambiarPassword = async () => {
     return;
   }
 
-  if (nuevaPassword.length < 6) {
-    setSnackbar({ open: true, message: 'La contraseña debe tener al menos 6 caracteres', severity: 'warning' });
+  // Validar contra reglas del servidor
+  const checks = evaluatePassword(nuevaPassword);
+  setPasswordChecks(checks);
+  if (!checks.length || !checks.upper || !checks.lower || !checks.number || !checks.nospace) {
+    // Construir mensaje con detalles
+    const detalles = [];
+    if (!checks.length) detalles.push('mínimo 8 caracteres');
+    if (!checks.upper) detalles.push('una letra mayúscula');
+    if (!checks.lower) detalles.push('una letra minúscula');
+    if (!checks.number) detalles.push('un número');
+    if (!checks.nospace) detalles.push('sin espacios');
+    setSnackbar({ open: true, message: `La contraseña debe contener: ${detalles.join(', ')}`, severity: 'warning' });
     return;
   }
 
@@ -204,11 +228,51 @@ const handleCambiarPassword = async () => {
             label="Nueva Contraseña"
             type="password"
             fullWidth
+            inputRef={passwordAnchorRef}
             value={nuevaPassword}
-            onChange={(e) => setNuevaPassword(e.target.value)}
+            onFocus={() => setShowPasswordChecklist(true)}
+            onChange={(e) => {
+              const v = e.target.value || '';
+              setNuevaPassword(v);
+              setPasswordChecks(evaluatePassword ? evaluatePassword(v) : { length: v.length >= 8, upper: /[A-Z]/.test(v), lower: /[a-z]/.test(v), number: /[0-9]/.test(v), nospace: !/\s/.test(v) });
+            }}
             sx={{ mb: 2 }}
-            helperText="Mínimo 6 caracteres"
+            helperText="Mínimo 8 caracteres, mayúscula, minúscula y número"
           />
+
+          <ClickAwayListener onClickAway={(event) => {
+            // Ignore clicks that originate from the password input itself
+            if (passwordAnchorRef.current && event && event.target && passwordAnchorRef.current.contains(event.target)) return;
+            setShowPasswordChecklist(false);
+          }} mouseEvent="onMouseDown" touchEvent="onTouchStart">
+            <Popper open={showPasswordChecklist} anchorEl={passwordAnchorRef.current} placement="right-start" style={{ zIndex: 1300 }} disablePortal>
+              <Paper elevation={3} sx={{ p: 2, width: 300 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>Requisitos de contraseña</Typography>
+                <List dense>
+                  <ListItem>
+                    <ListItemIcon>{passwordChecks.length ? <CheckCircleOutline sx={{ color: 'success.main' }} /> : <CancelIcon sx={{ color: 'text.disabled' }} />}</ListItemIcon>
+                    <ListItemText primary="Mínimo 8 caracteres" />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemIcon>{passwordChecks.upper ? <CheckCircleOutline sx={{ color: 'success.main' }} /> : <CancelIcon sx={{ color: 'text.disabled' }} />}</ListItemIcon>
+                    <ListItemText primary="Al menos una letra mayúscula" />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemIcon>{passwordChecks.lower ? <CheckCircleOutline sx={{ color: 'success.main' }} /> : <CancelIcon sx={{ color: 'text.disabled' }} />}</ListItemIcon>
+                    <ListItemText primary="Al menos una letra minúscula" />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemIcon>{passwordChecks.number ? <CheckCircleOutline sx={{ color: 'success.main' }} /> : <CancelIcon sx={{ color: 'text.disabled' }} />}</ListItemIcon>
+                    <ListItemText primary="Al menos un número" />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemIcon>{passwordChecks.nospace ? <CheckCircleOutline sx={{ color: 'success.main' }} /> : <CancelIcon sx={{ color: 'text.disabled' }} />}</ListItemIcon>
+                    <ListItemText primary="No puede contener espacios" />
+                  </ListItem>
+                </List>
+              </Paper>
+            </Popper>
+          </ClickAwayListener>
           <TextField
             label="Confirmar Contraseña"
             type="password"

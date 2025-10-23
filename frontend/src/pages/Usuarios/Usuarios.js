@@ -84,6 +84,7 @@ const evaluatePassword = (pw) => {
 // Anchor ref and visibility state for floating checklist
 const passwordAnchorRef = useRef(null);
 const [showPasswordChecklist, setShowPasswordChecklist] = useState(false);
+const editPasswordAnchorRef = useRef(null);
 
   const fetchUsuarios = async () => {
     try {
@@ -1413,7 +1414,17 @@ const usuariosFiltrados = usuarios.filter((u) =>
       onChange={(e) => setUsuarioEditado({ ...usuarioEditado, correo: e.target.value })} fullWidth margin="normal" />
     <TextField label="Nueva contraseña (opcional)" type="password"
       value={usuarioEditado.password || ''}
-      onChange={(e) => setUsuarioEditado({ ...usuarioEditado, password: e.target.value })}
+      inputRef={editPasswordAnchorRef}
+      onFocus={() => {
+        // anchor the floating checklist to the edit password field
+        passwordAnchorRef.current = editPasswordAnchorRef.current;
+        setShowPasswordChecklist(true);
+      }}
+      onChange={(e) => {
+        const value = e.target.value || '';
+        setUsuarioEditado({ ...usuarioEditado, password: value });
+        setPasswordChecks(evaluatePassword(value));
+      }}
       fullWidth margin="normal" />
     <TextField select label="Rol" fullWidth margin="normal" value={usuarioEditado.rol}
       onChange={(e) => setUsuarioEditado({ ...usuarioEditado, rol: e.target.value })}>
