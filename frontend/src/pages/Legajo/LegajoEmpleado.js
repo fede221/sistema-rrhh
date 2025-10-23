@@ -3,8 +3,8 @@ import { API_BASE_URL } from '../../config';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
-  Typography, Box, Paper, Grid, Avatar, Divider, Button, TextField,
-  Alert, Snackbar, MenuItem, Select, FormControl, InputLabel, Card, CardContent,
+  Typography, Box, Paper, Avatar, Divider, Button, TextField,
+  Alert, Snackbar, MenuItem, Select, FormControl,
   Chip, Fade, Zoom
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
@@ -16,9 +16,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import PhoneIcon from '@mui/icons-material/Phone';
 import WorkIcon from '@mui/icons-material/Work';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import FingerprintIcon from '@mui/icons-material/Fingerprint';
-import WcIcon from '@mui/icons-material/Wc';
-import FavoriteIcon from '@mui/icons-material/Favorite';
+// removed unused icons: FingerprintIcon, WcIcon, FavoriteIcon
 import PublicIcon from '@mui/icons-material/Public';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ContactPhoneIcon from '@mui/icons-material/ContactPhone';
@@ -105,7 +103,7 @@ const LegajoEmpleado = () => {
       return;
     }
 
-    if (datosEditables.telefono_contacto && !/^[\d\s\-\+\(\)]{7,20}$/.test(datosEditables.telefono_contacto)) {
+    if (datosEditables.telefono_contacto && !/^[0-9\s\-+()]{7,20}$/.test(datosEditables.telefono_contacto)) {
       setMensaje({ open: true, texto: 'El teléfono no tiene un formato válido', tipo: 'error' });
       return;
     }
@@ -161,38 +159,37 @@ const LegajoEmpleado = () => {
     return fecha;
   };
 
-  // Componente para campo de solo lectura con card
-  const CampoCard = ({ label, valor, icon: Icon, color = '#1976d2' }) => (
-    <Card
-      elevation={2}
-      sx={{
-        height: '100%',
-        transition: 'all 0.3s ease-in-out',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: 6,
-          borderLeft: `4px solid ${color}`
-        },
-        borderLeft: '4px solid transparent',
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-      }}
-    >
-      <CardContent sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          {Icon && (
-            <Avatar sx={{ bgcolor: color, width: 32, height: 32, mr: 1.5 }}>
-              <Icon sx={{ fontSize: 18 }} />
-            </Avatar>
-          )}
-          <Typography variant="caption" sx={{ color: '#666', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            {label}
-          </Typography>
-        </Box>
-        <Typography variant="body1" sx={{ color: '#000', fontWeight: 500, ml: Icon ? 5.5 : 0 }}>
-          {valor || '-'}
-        </Typography>
-      </CardContent>
-    </Card>
+  // CampoCard removed: using InfoRow for unified styling across the page
+
+  // Reusable row component: left label (blue), right value/input
+  const InfoRow = ({ label, campoKey, value, editable = false, type, options = [], icon: Icon, color = '#1976d2', index = 0 }) => (
+    <Box sx={{ display: 'flex', alignItems: 'center', py: 2, px: 3, bgcolor: index % 2 === 0 ? 'white' : '#fbfdff', borderBottom: '1px solid #e6eef9' }}>
+      <Box sx={{ width: 220, display: 'flex', alignItems: 'center' }}>
+        {Icon && (
+          <Avatar sx={{ bgcolor: color, width: 32, height: 32, mr: 1.5 }}>
+            <Icon sx={{ fontSize: 18 }} />
+          </Avatar>
+        )}
+        <Typography sx={{ color: color, fontWeight: 700 }}>{label}</Typography>
+      </Box>
+      <Box sx={{ flex: 1 }}>
+        {modoEdicion && editable ? (
+          type === 'date' ? (
+            <TextField type="date" value={datosEditables[campoKey]} onChange={(e) => handleCambio(campoKey, e.target.value)} fullWidth InputLabelProps={{ shrink: true }} />
+          ) : type === 'select' ? (
+            <FormControl fullWidth>
+              <Select value={datosEditables[campoKey]} onChange={(e) => handleCambio(campoKey, e.target.value)}>
+                {options.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+              </Select>
+            </FormControl>
+          ) : (
+            <TextField fullWidth value={datosEditables[campoKey] || ''} onChange={(e) => handleCambio(campoKey, e.target.value)} />
+          )
+        ) : (
+          <Typography sx={{ color: '#333' }}>{(datosEditables[campoKey] !== undefined && datosEditables[campoKey] !== '') ? datosEditables[campoKey] : (value !== undefined ? value : (legajo[campoKey] || '-'))}</Typography>
+        )}
+      </Box>
+    </Box>
   );
 
   return (
@@ -269,214 +266,92 @@ const LegajoEmpleado = () => {
             )}
           </Box>
 
-          {/* Datos Personales */}
+          {/* Datos Personales (estilo tabla) */}
           <Fade in={true} timeout={800}>
             <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Avatar sx={{ bgcolor: '#667eea', mr: 2, boxShadow: 2 }}>
-                  <BadgeIcon />
-                </Avatar>
-                <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#667eea' }}>
-                  Datos Personales
-                </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Avatar sx={{ bgcolor: '#e8f4ff', color: '#1976d2', mr: 2 }}>
+                    <BadgeIcon />
+                  </Avatar>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+                    Datos Personales
+                  </Typography>
+                </Box>
+                {!modoEdicion && (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleEditarClick}
+                    startIcon={<EditIcon />}
+                    sx={{ bgcolor: '#1976d2', textTransform: 'none' }}
+                  >
+                    EDITAR DATOS PERSONALES
+                  </Button>
+                )}
               </Box>
 
-              <Grid container spacing={2.5}>
-                {/* Nombre */}
-                <Grid item xs={12}>
-                  {modoEdicion ? (
-                    <TextField
-                      fullWidth
-                      label="Nombre"
-                      value={datosEditables.nombre}
-                      onChange={(e) => handleCambio('nombre', e.target.value)}
-                      variant="outlined"
-                      required
-                      InputProps={{
-                        startAdornment: (
-                          <BadgeIcon sx={{ mr: 1, color: '#667eea' }} />
+              <Box sx={{ mt: 2, borderRadius: 1, overflow: 'hidden', boxShadow: 1 }}>
+                {/* Rows: left label (blue), right value/input */}
+                {[
+                  { key: 'nombre', label: 'Nombre', editable: true },
+                  { key: 'apellido', label: 'Apellido', editable: true },
+                  { key: 'nro_documento', label: 'DNI', editable: false, value: legajo.nro_documento },
+                  { key: 'cuil', label: 'CUIL', editable: false, value: legajo.cuil },
+                  { key: 'fecha_nacimiento', label: 'Fecha de nacimiento', editable: true, type: 'date' },
+                  { key: 'sexo', label: 'Sexo', editable: true, type: 'select', options: ['Masculino', 'Femenino', 'Otro'] },
+                  { key: 'estado_civil', label: 'Estado Civil', editable: true, type: 'select', options: ['Soltero', 'Casado', 'Divorciado', 'Viudo', 'Unión Convivencial'] },
+                  { key: 'tipo_documento', label: 'Tipo de Documento', editable: true, type: 'select', options: ['DNI', 'LC', 'LE', 'Pasaporte'] },
+                  { key: 'nacionalidad', label: 'Nacionalidad', editable: true }
+                ].map((field, idx) => (
+                  <Box
+                    key={field.key}
+                    sx={{ display: 'flex', alignItems: 'center', py: 2, px: 3, bgcolor: idx % 2 === 0 ? 'white' : '#fbfdff', borderBottom: '1px solid #e6eef9' }}
+                  >
+                    <Box sx={{ width: 220 }}>
+                      <Typography sx={{ color: '#1976d2', fontWeight: 700 }}>{field.label}</Typography>
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      {modoEdicion && field.editable ? (
+                        field.type === 'date' ? (
+                          <TextField
+                            type="date"
+                            value={datosEditables.fecha_nacimiento}
+                            onChange={(e) => handleCambio('fecha_nacimiento', e.target.value)}
+                            fullWidth
+                            InputLabelProps={{ shrink: true }}
+                          />
+                        ) : field.type === 'select' ? (
+                          <FormControl fullWidth>
+                            <Select
+                              value={datosEditables[field.key]}
+                              onChange={(e) => handleCambio(field.key, e.target.value)}
+                            >
+                              {field.options.map(opt => (
+                                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        ) : (
+                          <TextField
+                            fullWidth
+                            value={datosEditables[field.key] || ''}
+                            onChange={(e) => handleCambio(field.key, e.target.value)}
+                          />
                         )
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': { borderColor: '#667eea' },
-                          '&.Mui-focused fieldset': { borderColor: '#667eea' }
-                        }
-                      }}
-                    />
-                  ) : (
-                    <CampoCard label="Nombre" valor={legajo.nombre} icon={BadgeIcon} color="#667eea" />
-                  )}
-                </Grid>
-
-                {/* Apellido */}
-                <Grid item xs={12}>
-                  {modoEdicion ? (
-                    <TextField
-                      fullWidth
-                      label="Apellido"
-                      value={datosEditables.apellido}
-                      onChange={(e) => handleCambio('apellido', e.target.value)}
-                      variant="outlined"
-                      required
-                      InputProps={{
-                        startAdornment: (
-                          <BadgeIcon sx={{ mr: 1, color: '#667eea' }} />
-                        )
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': { borderColor: '#667eea' },
-                          '&.Mui-focused fieldset': { borderColor: '#667eea' }
-                        }
-                      }}
-                    />
-                  ) : (
-                    <CampoCard label="Apellido" valor={legajo.apellido} icon={BadgeIcon} color="#667eea" />
-                  )}
-                </Grid>
-
-                {/* DNI - Solo lectura */}
-                <Grid item xs={12}>
-                  <CampoCard label="DNI" valor={legajo.nro_documento} icon={FingerprintIcon} color="#f50057" />
-                </Grid>
-
-                {/* CUIL - Solo lectura */}
-                <Grid item xs={12}>
-                  <CampoCard label="CUIL" valor={legajo.cuil} icon={FingerprintIcon} color="#f50057" />
-                </Grid>
-
-                {/* Tipo Documento */}
-                <Grid item xs={12}>
-                  {modoEdicion ? (
-                    <FormControl fullWidth>
-                      <InputLabel>Tipo de Documento</InputLabel>
-                      <Select
-                        value={datosEditables.tipo_documento}
-                        onChange={(e) => handleCambio('tipo_documento', e.target.value)}
-                        label="Tipo de Documento"
-                        sx={{
-                          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' }
-                        }}
-                      >
-                        <MenuItem value="DNI">DNI</MenuItem>
-                        <MenuItem value="LC">LC</MenuItem>
-                        <MenuItem value="LE">LE</MenuItem>
-                        <MenuItem value="Pasaporte">Pasaporte</MenuItem>
-                      </Select>
-                    </FormControl>
-                  ) : (
-                    <CampoCard label="Tipo Documento" valor={legajo.tipo_documento} icon={AssignmentIcon} color="#667eea" />
-                  )}
-                </Grid>
-
-                {/* Fecha Nacimiento */}
-                <Grid item xs={12}>
-                  {modoEdicion ? (
-                    <TextField
-                      fullWidth
-                      label="Fecha de Nacimiento"
-                      type="date"
-                      value={datosEditables.fecha_nacimiento}
-                      onChange={(e) => handleCambio('fecha_nacimiento', e.target.value)}
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{
-                        startAdornment: (
-                          <CalendarMonthIcon sx={{ mr: 1, color: '#667eea' }} />
-                        )
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': { borderColor: '#667eea' },
-                          '&.Mui-focused fieldset': { borderColor: '#667eea' }
-                        }
-                      }}
-                    />
-                  ) : (
-                    <CampoCard label="Fecha Nacimiento" valor={formatFecha(legajo.fecha_nacimiento)} icon={CalendarMonthIcon} color="#667eea" />
-                  )}
-                </Grid>
-
-                {/* Sexo */}
-                <Grid item xs={12}>
-                  {modoEdicion ? (
-                    <FormControl fullWidth>
-                      <InputLabel>Sexo</InputLabel>
-                      <Select
-                        value={datosEditables.sexo}
-                        onChange={(e) => handleCambio('sexo', e.target.value)}
-                        label="Sexo"
-                        sx={{
-                          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' }
-                        }}
-                      >
-                        <MenuItem value="Masculino">Masculino</MenuItem>
-                        <MenuItem value="Femenino">Femenino</MenuItem>
-                        <MenuItem value="Otro">Otro</MenuItem>
-                      </Select>
-                    </FormControl>
-                  ) : (
-                    <CampoCard label="Sexo" valor={legajo.sexo} icon={WcIcon} color="#667eea" />
-                  )}
-                </Grid>
-
-                {/* Estado Civil */}
-                <Grid item xs={12}>
-                  {modoEdicion ? (
-                    <FormControl fullWidth>
-                      <InputLabel>Estado Civil</InputLabel>
-                      <Select
-                        value={datosEditables.estado_civil}
-                        onChange={(e) => handleCambio('estado_civil', e.target.value)}
-                        label="Estado Civil"
-                        sx={{
-                          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' }
-                        }}
-                      >
-                        <MenuItem value="Soltero">Soltero</MenuItem>
-                        <MenuItem value="Casado">Casado</MenuItem>
-                        <MenuItem value="Divorciado">Divorciado</MenuItem>
-                        <MenuItem value="Viudo">Viudo</MenuItem>
-                        <MenuItem value="Unión Convivencial">Unión Convivencial</MenuItem>
-                      </Select>
-                    </FormControl>
-                  ) : (
-                    <CampoCard label="Estado Civil" valor={legajo.estado_civil} icon={FavoriteIcon} color="#667eea" />
-                  )}
-                </Grid>
-
-                {/* Nacionalidad */}
-                <Grid item xs={12}>
-                  {modoEdicion ? (
-                    <TextField
-                      fullWidth
-                      label="Nacionalidad"
-                      value={datosEditables.nacionalidad}
-                      onChange={(e) => handleCambio('nacionalidad', e.target.value)}
-                      variant="outlined"
-                      InputProps={{
-                        startAdornment: (
-                          <PublicIcon sx={{ mr: 1, color: '#667eea' }} />
-                        )
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': { borderColor: '#667eea' },
-                          '&.Mui-focused fieldset': { borderColor: '#667eea' }
-                        }
-                      }}
-                    />
-                  ) : (
-                    <CampoCard label="Nacionalidad" valor={legajo.nacionalidad} icon={PublicIcon} color="#667eea" />
-                  )}
-                </Grid>
-              </Grid>
+                      ) : (
+                        <Typography sx={{ color: '#333' }}>{
+                          // show value from datosEditables if present (after save) else from legajo
+                          (datosEditables[field.key] !== undefined && datosEditables[field.key] !== '') ? datosEditables[field.key] : (field.value !== undefined ? field.value : (legajo[field.key] || '-'))
+                        }</Typography>
+                      )}
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
             </Box>
           </Fade>
+ 
 
           <Divider sx={{ my: 4, borderStyle: 'dashed', borderColor: '#667eea', opacity: 0.3 }} />
 
@@ -492,107 +367,16 @@ const LegajoEmpleado = () => {
                 </Typography>
               </Box>
 
-              <Grid container spacing={2.5}>
-                {/* Domicilio */}
-                <Grid item xs={12}>
-                  {modoEdicion ? (
-                    <TextField
-                      fullWidth
-                      label="Domicilio"
-                      value={datosEditables.domicilio}
-                      onChange={(e) => handleCambio('domicilio', e.target.value)}
-                      variant="outlined"
-                      InputProps={{
-                        startAdornment: (
-                          <HomeIcon sx={{ mr: 1, color: '#43a047' }} />
-                        )
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': { borderColor: '#43a047' },
-                          '&.Mui-focused fieldset': { borderColor: '#43a047' }
-                        }
-                      }}
-                    />
-                  ) : (
-                    <CampoCard label="Domicilio" valor={legajo.domicilio} icon={HomeIcon} color="#43a047" />
-                  )}
-                </Grid>
-
-                {/* Localidad */}
-                <Grid item xs={12}>
-                  {modoEdicion ? (
-                    <TextField
-                      fullWidth
-                      label="Localidad"
-                      value={datosEditables.localidad}
-                      onChange={(e) => handleCambio('localidad', e.target.value)}
-                      variant="outlined"
-                      InputProps={{
-                        startAdornment: (
-                          <LocationOnIcon sx={{ mr: 1, color: '#43a047' }} />
-                        )
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': { borderColor: '#43a047' },
-                          '&.Mui-focused fieldset': { borderColor: '#43a047' }
-                        }
-                      }}
-                    />
-                  ) : (
-                    <CampoCard label="Localidad" valor={legajo.localidad} icon={LocationOnIcon} color="#43a047" />
-                  )}
-                </Grid>
-
-                {/* Provincia */}
-                <Grid item xs={12}>
-                  {modoEdicion ? (
-                    <TextField
-                      fullWidth
-                      label="Provincia"
-                      value={datosEditables.provincia}
-                      onChange={(e) => handleCambio('provincia', e.target.value)}
-                      variant="outlined"
-                      InputProps={{
-                        startAdornment: (
-                          <PublicIcon sx={{ mr: 1, color: '#43a047' }} />
-                        )
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': { borderColor: '#43a047' },
-                          '&.Mui-focused fieldset': { borderColor: '#43a047' }
-                        }
-                      }}
-                    />
-                  ) : (
-                    <CampoCard label="Provincia" valor={legajo.provincia} icon={PublicIcon} color="#43a047" />
-                  )}
-                </Grid>
-
-                {/* Código Postal */}
-                <Grid item xs={12}>
-                  {modoEdicion ? (
-                    <TextField
-                      fullWidth
-                      label="Código Postal"
-                      value={datosEditables.codigo_postal}
-                      onChange={(e) => handleCambio('codigo_postal', e.target.value)}
-                      variant="outlined"
-                      inputProps={{ maxLength: 8 }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': { borderColor: '#43a047' },
-                          '&.Mui-focused fieldset': { borderColor: '#43a047' }
-                        }
-                      }}
-                    />
-                  ) : (
-                    <CampoCard label="Código Postal" valor={legajo.codigo_postal} icon={LocationOnIcon} color="#43a047" />
-                  )}
-                </Grid>
-              </Grid>
+              <Box sx={{ mt: 2, borderRadius: 1, overflow: 'hidden', boxShadow: 1 }}>
+                {[
+                  { key: 'domicilio', label: 'Domicilio', editable: true, icon: HomeIcon },
+                  { key: 'localidad', label: 'Localidad', editable: true, icon: LocationOnIcon },
+                  { key: 'provincia', label: 'Provincia', editable: true, icon: PublicIcon },
+                  { key: 'codigo_postal', label: 'Código Postal', editable: true, icon: LocationOnIcon }
+                ].map((f, i) => (
+                  <InfoRow key={f.key} label={f.label} campoKey={f.key} editable={f.editable} icon={f.icon} color="#43a047" index={i} />
+                ))}
+              </Box>
             </Box>
           </Fade>
 
@@ -610,60 +394,14 @@ const LegajoEmpleado = () => {
                 </Typography>
               </Box>
 
-              <Grid container spacing={2.5}>
-                {/* Teléfono */}
-                <Grid item xs={12}>
-                  {modoEdicion ? (
-                    <TextField
-                      fullWidth
-                      label="Teléfono"
-                      value={datosEditables.telefono_contacto}
-                      onChange={(e) => handleCambio('telefono_contacto', e.target.value)}
-                      variant="outlined"
-                      placeholder="+54 11 1234-5678"
-                      InputProps={{
-                        startAdornment: (
-                          <PhoneIcon sx={{ mr: 1, color: '#fb8c00' }} />
-                        )
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': { borderColor: '#fb8c00' },
-                          '&.Mui-focused fieldset': { borderColor: '#fb8c00' }
-                        }
-                      }}
-                    />
-                  ) : (
-                    <CampoCard label="Teléfono" valor={legajo.telefono_contacto} icon={PhoneIcon} color="#fb8c00" />
-                  )}
-                </Grid>
-
-                {/* Contacto Emergencia */}
-                <Grid item xs={12}>
-                  {modoEdicion ? (
-                    <TextField
-                      fullWidth
-                      label="Contacto de Emergencia"
-                      value={datosEditables.contacto_emergencia}
-                      onChange={(e) => handleCambio('contacto_emergencia', e.target.value)}
-                      variant="outlined"
-                      InputProps={{
-                        startAdornment: (
-                          <ContactPhoneIcon sx={{ mr: 1, color: '#fb8c00' }} />
-                        )
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': { borderColor: '#fb8c00' },
-                          '&.Mui-focused fieldset': { borderColor: '#fb8c00' }
-                        }
-                      }}
-                    />
-                  ) : (
-                    <CampoCard label="Contacto Emergencia" valor={legajo.contacto_emergencia} icon={ContactPhoneIcon} color="#fb8c00" />
-                  )}
-                </Grid>
-              </Grid>
+              <Box sx={{ mt: 2, borderRadius: 1, overflow: 'hidden', boxShadow: 1 }}>
+                {[
+                  { key: 'telefono_contacto', label: 'Teléfono', editable: true, icon: PhoneIcon },
+                  { key: 'contacto_emergencia', label: 'Contacto Emergencia', editable: true, icon: ContactPhoneIcon }
+                ].map((f, i) => (
+                  <InfoRow key={f.key} label={f.label} campoKey={f.key} editable={f.editable} icon={f.icon} color="#fb8c00" index={i} />
+                ))}
+              </Box>
             </Box>
           </Fade>
 
@@ -686,23 +424,17 @@ const LegajoEmpleado = () => {
                 />
               </Box>
 
-              <Grid container spacing={2.5}>
-                <Grid item xs={12}>
-                  <CampoCard label="Fecha Ingreso" valor={formatFecha(legajo.fecha_ingreso)} icon={CalendarMonthIcon} color="#5c6bc0" />
-                </Grid>
-                <Grid item xs={12}>
-                  <CampoCard label="Centro de Costos" valor={legajo.centro_costos} icon={WorkIcon} color="#5c6bc0" />
-                </Grid>
-                <Grid item xs={12}>
-                  <CampoCard label="Tarea" valor={legajo.tarea_desempenada} icon={AssignmentIcon} color="#5c6bc0" />
-                </Grid>
-                <Grid item xs={12}>
-                  <CampoCard label="Banco" valor={legajo.banco_destino} icon={AccountBalanceIcon} color="#5c6bc0" />
-                </Grid>
-                <Grid item xs={12}>
-                  <CampoCard label="Cuenta Bancaria" valor={legajo.cuenta_bancaria} icon={AccountBalanceIcon} color="#5c6bc0" />
-                </Grid>
-              </Grid>
+              <Box sx={{ mt: 2, borderRadius: 1, overflow: 'hidden', boxShadow: 1 }}>
+                {[
+                  { key: 'fecha_ingreso', label: 'Fecha Ingreso', editable: false, icon: CalendarMonthIcon },
+                  { key: 'centro_costos', label: 'Centro de Costos', editable: false, icon: WorkIcon },
+                  { key: 'tarea_desempenada', label: 'Tarea', editable: false, icon: AssignmentIcon },
+                  { key: 'banco_destino', label: 'Banco', editable: false, icon: AccountBalanceIcon },
+                  { key: 'cuenta_bancaria', label: 'Cuenta Bancaria', editable: false, icon: AccountBalanceIcon }
+                ].map((f, i) => (
+                  <InfoRow key={f.key} label={f.label} campoKey={f.key} editable={f.editable} icon={f.icon} color="#5c6bc0" index={i} value={f.key === 'fecha_ingreso' ? formatFecha(legajo.fecha_ingreso) : undefined} />
+                ))}
+              </Box>
             </Box>
           </Fade>
 
