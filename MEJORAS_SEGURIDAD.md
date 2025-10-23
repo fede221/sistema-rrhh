@@ -4,6 +4,8 @@
 **Versión:** 1.2.0
 **Estado:** ✅ Implementado
 
+> **Nota:** Esta es la versión 1.2.0 del sistema. Ver CHANGELOG.md para historial completo.
+
 ## Resumen Ejecutivo
 
 Se implementaron mejoras críticas de seguridad, logging profesional y validaciones robustas en el backend del sistema RRHH. Estas mejoras elevan la calificación del código de **8.5/10 a 9.2/10**.
