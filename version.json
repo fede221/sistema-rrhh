@@ -1,7 +1,7 @@
 {
-  "version": "1.0.0",
-  "buildDate": "2025-10-19",
-  "buildNumber": "1",
-  "releaseNotes": "Lanzamiento inicial del sistema con funcionalidades completas de RRHH",
+  "version": "1.2.0",
+  "buildDate": "2025-10-23",
+  "buildNumber": "2",
+  "releaseNotes": "Mejoras de infraestructura: logging profesional con Winston, validación de variables de entorno, uploads seguros, HTTPS forzado en producción",
   "environment": "production"
 }
