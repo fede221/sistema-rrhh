@@ -78,8 +78,10 @@ const helmetConfig = () => {
     // Cross-Origin-Opener-Policy
     crossOriginOpenerPolicy: { policy: "same-origin" },
 
-    // Cross-Origin-Resource-Policy
-    crossOriginResourcePolicy: { policy: "same-origin" },
+  // Cross-Origin-Resource-Policy
+  // En desarrollo permitimos 'cross-origin' para que el frontend (otro puerto/origen) pueda cargar
+  // imágenes y recursos estáticos desde /uploads. En producción mantenemos 'same-origin' para mayor seguridad.
+  crossOriginResourcePolicy: { policy: isProduction ? 'same-origin' : 'cross-origin' },
 
     // DNS Prefetch Control - Previene fugas de información
     dnsPrefetchControl: { allow: false },
