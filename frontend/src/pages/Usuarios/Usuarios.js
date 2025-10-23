@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState, useRef } from 'react';
 import secureStorage from '../../utils/secureStorage';
 import { apiRequest } from '../../utils/api';
 import {
@@ -7,7 +7,8 @@ import {
 import {
   Button, Box, Typography, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, MenuItem, Input, Alert, List, ListItem, ListItemText, Accordion,
-  AccordionSummary, AccordionDetails, LinearProgress, IconButton
+  AccordionSummary, AccordionDetails, LinearProgress, IconButton, ListItemIcon,
+  Popper, Paper, ClickAwayListener
 } from '@mui/material';
 import { 
   ExpandMore, 
@@ -16,7 +17,9 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Block as SuspendIcon,
-  CheckCircle as ActivateIcon
+  CheckCircle as ActivateIcon,
+  CheckCircleOutline,
+  Cancel as CancelIcon
 } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
 
@@ -59,6 +62,28 @@ const Usuarios = () => {
   fecha_nacimiento: '',
   referente_id: ''
 });
+
+// Estado para checklist de contraseña
+const [passwordChecks, setPasswordChecks] = useState({
+  length: false,
+  upper: false,
+  lower: false,
+  number: false,
+  special: false
+});
+
+const evaluatePassword = (pw) => {
+  const length = pw.length >= 6; // keep 6 to match existing frontend validation
+  const upper = /[A-Z]/.test(pw);
+  const lower = /[a-z]/.test(pw);
+  const number = /[0-9]/.test(pw);
+  const special = /[!@#$%^&*(),.?":{}|<>]/.test(pw);
+  return { length, upper, lower, number, special };
+};
+
+// Anchor ref and visibility state for floating checklist
+const passwordAnchorRef = useRef(null);
+const [showPasswordChecklist, setShowPasswordChecklist] = useState(false);
 
   const fetchUsuarios = async () => {
     try {
@@ -1232,9 +1257,76 @@ const usuariosFiltrados = usuarios.filter((u) =>
               fullWidth 
               margin="normal" 
               value={nuevoUsuario.password}
-              onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, password: e.target.value })}
+              inputRef={passwordAnchorRef}
+              onFocus={() => setShowPasswordChecklist(true)}
+              onChange={(e) => {
+                const value = e.target.value || '';
+                setNuevoUsuario({ ...nuevoUsuario, password: value });
+                setPasswordChecks(evaluatePassword(value));
+              }}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
+
+            {/* Floating checklist shown while password field is focused */}
+            <ClickAwayListener onClickAway={() => setShowPasswordChecklist(false)}>
+              <Popper open={showPasswordChecklist} anchorEl={passwordAnchorRef.current} placement="right-start" style={{ zIndex: 1300 }}>
+                <Paper elevation={3} sx={{ p: 2, width: 300 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>Requisitos de contraseña</Typography>
+                  <List dense>
+                    <ListItem>
+                      <ListItemIcon>
+                        {passwordChecks.length ? (
+                          <CheckCircleOutline sx={{ color: 'success.main' }} />
+                        ) : (
+                          <CancelIcon sx={{ color: 'text.disabled' }} />
+                        )}
+                      </ListItemIcon>
+                      <ListItemText primary="Mínimo 6 caracteres" />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemIcon>
+                        {passwordChecks.upper ? (
+                          <CheckCircleOutline sx={{ color: 'success.main' }} />
+                        ) : (
+                          <CancelIcon sx={{ color: 'text.disabled' }} />
+                        )}
+                      </ListItemIcon>
+                      <ListItemText primary="Al menos una letra mayúscula" />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemIcon>
+                        {passwordChecks.lower ? (
+                          <CheckCircleOutline sx={{ color: 'success.main' }} />
+                        ) : (
+                          <CancelIcon sx={{ color: 'text.disabled' }} />
+                        )}
+                      </ListItemIcon>
+                      <ListItemText primary="Al menos una letra minúscula" />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemIcon>
+                        {passwordChecks.number ? (
+                          <CheckCircleOutline sx={{ color: 'success.main' }} />
+                        ) : (
+                          <CancelIcon sx={{ color: 'text.disabled' }} />
+                        )}
+                      </ListItemIcon>
+                      <ListItemText primary="Al menos un número" />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemIcon>
+                        {passwordChecks.special ? (
+                          <CheckCircleOutline sx={{ color: 'success.main' }} />
+                        ) : (
+                          <CancelIcon sx={{ color: 'text.disabled' }} />
+                        )}
+                      </ListItemIcon>
+                      <ListItemText primary="Al menos un carácter especial (!@#$...)" />
+                    </ListItem>
+                  </List>
+                </Paper>
+              </Popper>
+            </ClickAwayListener>
           </Box>
           
           <TextField 
