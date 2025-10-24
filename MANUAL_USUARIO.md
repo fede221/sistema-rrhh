@@ -2,8 +2,8 @@
 
 ## DB Consulting - Sistema de Recursos Humanos
 
-**Versión**: 1.0  
-**Fecha**: Octubre 2025  
+**Versión**: 1.2.1  
+**Fecha**: 23 Octubre 2025  
 **URL**: https://rrhh.dbconsulting.com.ar
 
 ---
@@ -33,6 +33,7 @@ El Sistema RRHH de DB Consulting es una plataforma web integral diseñada para g
 ✅ **Control de Vacaciones**: Solicitud y aprobación de vacaciones  
 ✅ **Gestión de Permisos**: Solicitud y seguimiento de permisos laborales  
 ✅ **Recibos de Sueldo**: Generación y descarga de recibos digitales  
+✅ **Importación de Recibos grandes**: Soporte para importar archivos de nómina hasta 50MB (administradores)  
 ✅ **Multi-empresa**: Gestión de múltiples empresas desde un solo sistema  
 ✅ **Dashboard Interactivo**: Visualización de estadísticas y métricas  
 ✅ **Acceso Seguro**: Sistema con SSL/TLS y autenticación por token  
@@ -71,6 +72,7 @@ Por seguridad, se recomienda cambiar la contraseña en el primer inicio:
 3. Ingresar:
    - Contraseña actual
    - Nueva contraseña (mínimo 8 caracteres)
+   - Nueva contraseña (mínimo 8 caracteres, al menos 1 mayúscula, 1 minúscula y 1 número; sin espacios)
    - Confirmar nueva contraseña
 4. Hacer clic en **"Guardar"**
 
@@ -82,6 +84,10 @@ Si olvidaste tu contraseña:
 2. Ingresar tu DNI
 3. Recibirás instrucciones por email
 4. Contactar a soporte si no recibes el correo
+
+#### Checklist de Contraseña (UI)
+
+En los formularios de creación/edición de usuario y en el flujo de recuperación de contraseña verás un checklist en vivo que indica si la nueva contraseña cumple con las reglas mínimas (longitud, mayúscula, minúscula, número y sin espacios). El sistema validará en cliente antes de enviar la solicitud al servidor.
 
 ### Cerrar Sesión
 
@@ -123,6 +129,7 @@ El sistema tiene diferentes roles con permisos específicos:
 
 **Permisos básicos**:
 - ✅ Ver su propio legajo
+ - ✅ Ver y editar algunos campos personales de su propio legajo (email, teléfono, dirección). Los campos laborales (fecha de ingreso, salario, empresa, puesto) solo pueden ser editados por RRHH/Administrador.
 - ✅ Solicitar vacaciones
 - ✅ Solicitar permisos
 - ✅ Descargar sus recibos de sueldo
@@ -247,8 +254,12 @@ Administra la información de los empleados.
 #### Editar Legajo
 
 1. Hacer clic en el legajo a editar
-2. Modificar los campos necesarios
+2. Modificar los campos que el rol permita:
+   - Empleados: pueden editar datos personales (email, teléfono, dirección). No pueden editar datos laborales.
+   - Referentes/Administradores: pueden editar datos personales y laborales según permisos.
 3. Hacer clic en **"Guardar Cambios"**
+
+Nota de UI: La vista de legajo fue modernizada con un layout consistente (filas tipo "InfoRow") y muestra iniciales del usuario en el encabezado cuando no hay foto. Esto facilita la lectura y edición de secciones.
 
 #### Subir Documentación
 
@@ -402,6 +413,15 @@ Para empleados que ya no trabajan en la empresa:
 4. Hacer clic en **"Generar Recibos"**
 5. Los recibos quedan disponibles para los empleados
 
+#### Importar Recibos (Administradores)
+
+1. Ir a **Recibos** → **Importar**
+2. Seleccionar el archivo con la liquidación (CSV/XLSX/PDF según formato acordado)
+3. El sistema permite archivos de hasta **50MB** para importaciones masivas. Si el archivo excede este límite, recibirás un mensaje de error.
+4. Una vez subido, revisar el progreso en **Recibos → Progreso de importación**
+
+Consejo: Para archivos muy grandes, usa una conexión estable y revisa la carpeta `/uploads` del servidor (RRHH/Administrador) si necesitas verificar el archivo subido.
+
 #### Reenviar Recibo
 
 Si un empleado no puede descargar un recibo:
@@ -475,6 +495,8 @@ El sistema es **responsive** y se adapta a smartphones y tablets.
 ### Recomendaciones para Móvil
 
 - Usa WiFi para descargar recibos (archivos pesados)
+
+Nota: En desarrollo local puede que las imágenes de `/uploads` se sirvan con políticas CORS relajadas; en producción el servidor aplica políticas de seguridad estrictas.
 - Mantén el navegador actualizado
 - Agrega el sitio a favoritos para acceso rápido
 - Puedes agregar un acceso directo en la pantalla de inicio
@@ -492,6 +514,9 @@ El sistema es **responsive** y se adapta a smartphones y tablets.
 
 2. **Solicitar vacaciones**:
    - Menú → Vacaciones → Nueva Solicitud
+
+6. **Ver indicador de versión**:
+   - En la esquina inferior derecha del sistema verás el indicador de versión (ej. v1.2.1). Si necesitas reportar un bug, cópialo para facilitar el soporte.
 
 3. **Solicitar permiso**:
    - Menú → Permisos → Nuevo Permiso
@@ -551,7 +576,7 @@ El sistema es **responsive** y se adapta a smartphones y tablets.
 R: En la pantalla de login, hacer clic en "¿Olvidaste tu contraseña?" e ingresar tu DNI. Recibirás instrucciones por email.
 
 **P: ¿Cuánto tiempo permanezco logueado?**  
-R: Tu sesión permanece activa por 8 horas de inactividad. Después deberás volver a iniciar sesión.
+R: Tu sesión permanece activa por 8 hours de inactividad. Después deberás volver a iniciar sesión.
 
 **P: ¿Es seguro el sistema?**  
 R: Sí, el sistema usa encriptación SSL/TLS (https) y todas las contraseñas están cifradas.
@@ -898,3 +923,18 @@ He leído y comprendido este manual de usuario del Sistema RRHH.
 **Firma**: ___________________________
 
 *Este documento debe ser firmado y entregado a RRHH como constancia de capacitación.*
+## 📝 Registro de Cambios del Manual
+
+**Versión 1.2.1** (23 Octubre 2025)
+- Actualizado el manual para incluir:
+   - Soporte de importación de recibos hasta 50MB (administradores)
+   - Checklist de contraseñas en UI y reglas de validación (mínimo 8 caracteres, mayúscula, minúscula, número, sin espacios)
+   - Cambio en permisos de edición de legajo: empleados pueden editar datos personales pero no laborales
+   - Actualización visual: iniciales en avatar y layout unificado en legajo
+   - Indicador de versión en la UI (esquina inferior derecha)
+   - Notas sobre helmet/CORP y carga de imágenes en desarrollo
+
+**Versión 1.0** (Octubre 2025)
+- Primera versión del manual
+- Cobertura completa de todos los módulos
+- Guías por rol incluidas
