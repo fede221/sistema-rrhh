@@ -19,6 +19,37 @@ y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
 ---
 
+## [1.2.1] - 2025-10-23
+
+### 🛠️ Correcciones y Mejoras (Patch)
+
+Pequeña versión de parche que incorpora varias correcciones funcionales y mejoras de experiencia introducidas durante el desarrollo y pruebas locales.
+
+#### ✨ Agregado / Mejorado
+- Aumentado el límite de importación de recibos a **50MB** en la ruta `/api/recibos/importar` (soporte para archivos grandes de nómina).
+- Añadido checklist en UI para validación de contraseñas (creación/edición de usuarios y reset de contraseña) que muestra reglas en vivo.
+- Sincronizadas las validaciones de contraseña frontend/backend (mínimo 8 caracteres, mayúscula, minúscula, número, sin espacios).
+- Mejorada la estabilidad del Popper/Checklist para que no se cierre al tipear (ClickAwayListener + disablePortal ajustes).
+- Refactor en `LegajoEmpleado` para un layout consistente (InfoRow), ocultado de chips indefinidos y uso de iniciales en avatar.
+- Navbar actualizado para mostrar iniciales del usuario en lugar del icono genérico.
+- Ajuste temporal de helmet (Cross-Origin-Resource-Policy) en desarrollo para permitir carga de imágenes desde el frontend local (resuelve `ERR_BLOCKED_BY_RESPONSE.NotSameOrigin`).
+- Imágenes y assets locales ahora servidos correctamente durante desarrollo (ver nota de seguridad para producción).
+
+#### 🔧 Corregido
+- Error Multer `LIMIT_FILE_SIZE` al importar archivos grandes: configurado `multer` con instancia específica para recibos (50MB).
+- Error 400 en POST `/api/auth/reset-password/:userId` causado por reglas de contraseña distintas entre frontend y backend: corregido cliente para validar antes de enviar.
+- Rate-limiter IPv6: se mantuvieron las correcciones previas para soporte IPv4/IPv6 (no regresivo).
+- Diversos fixes menores de compilación y lint en frontend (JSX duplicado, imports no usados).
+
+#### 📦 Packaging
+- Imágenes Docker locales generadas / etiquetadas: `elcheloide/sistema-rrhh-backend:rrhh1.0.1` y `elcheloide/sistema-rrhh-frontend:rrhh1.0.1`.
+
+#### ⚠️ Notas
+- Cambios en `helmet` y CORP aplicados solo en desarrollo; en producción se mantienen políticas estrictas (`same-origin`) para seguridad.
+- Permitir 50MB en uploads es seguro para entornos controlados; monitorizar uso de disco y considerar almacenamiento en object store para producción.
+
+---
+
 ## [1.2.0] - 2025-10-23
 
 ### 🚀 Mejoras de Infraestructura y Logging Profesional
@@ -554,6 +585,8 @@ Cuando hagas cambios al sistema:
 ## Links de Versiones
 
 - [Unreleased]: Cambios no publicados aún
+- [1.2.1]: https://github.com/fede221/sistema-rrhh/releases/tag/v1.2.1
+- [1.2.0]: https://github.com/fede221/sistema-rrhh/releases/tag/v1.2.0
 - [1.0.0]: https://github.com/fede221/sistema-rrhh/releases/tag/v1.0.0
 
 ---

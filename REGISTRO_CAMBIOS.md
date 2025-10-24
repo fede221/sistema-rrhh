@@ -1,5 +1,7 @@
 # 📝 Registro de Cambios - Estandarización de Rutas
 
+> Nota: Este registro se actualizó como parte del lanzamiento v1.2.1 (2025-10-23).
+
 ## Fecha: 18 de Octubre de 2025
 
 ## 🎯 Objetivo
