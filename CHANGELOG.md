@@ -19,6 +19,32 @@ y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
 ---
 
+## [1.2.2] - 2025-10-24
+
+### 🔧 Correcciones de Base de Datos (Patch)
+
+Corrección crítica de encoding en la base de datos que afectaba la visualización de nombres de empresas con caracteres especiales (ñ, á, é, etc.).
+
+#### 🛠️ Corregido
+- **CRÍTICO**: Base de datos configurada con charset `latin1` en lugar de `utf8mb4`, causando corrupción de caracteres especiales en nombres de empresas (ejemplo: "Compañía" mostraba como "CompaÃƒÆ'Ã‚Â±Ã...").
+- Ejecutada migración de charset en base de datos y todas las tablas (17 tablas) de `latin1_swedish_ci` a `utf8mb4_unicode_ci`.
+- Verificada la configuración de charset en backend (`backend/config/db.js`) para asegurar `SET NAMES utf8mb4` en cada conexión.
+
+#### ⚠️ Notas Importantes
+- Algunos nombres de empresas anteriores están dañados permanentemente (bytes perdidos durante la corrupción multibyte).
+- Los siguientes nombres deben ser re-ingresados manualmente o restaurados desde backup:
+  - ID 2: "Compañía Integral de Alimentos SA" (mostraba caracteres corruptos)
+  - ID 6: "COMPAÑÍA RIONEGRINA DE ALIMENTOS S.A.S" (con caracteres perdidos)
+- **ACCIÓN REQUERIDA**: Reiniciar el backend después de aplicar esta corrección para que los cambios tomen efecto.
+- Todos los **nuevos registros** se almacenarán y mostrarán correctamente con encoding UTF-8.
+
+#### 📋 Scripts de Diagnóstico Creados
+- `backend/scripts/fix-encoding-auto.js` - Herramienta de conversión automática de charset
+- `backend/scripts/check-hex.js` - Herramienta de diagnóstico para verificar encoding
+- `backend/scripts/ENCODING_FIX_REPORT.md` - Reporte detallado de la corrección
+
+---
+
 ## [1.2.1] - 2025-10-23
 
 ### 🛠️ Correcciones y Mejoras (Patch)
