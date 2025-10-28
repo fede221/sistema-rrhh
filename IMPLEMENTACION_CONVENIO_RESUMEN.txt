@@ -1,0 +1,221 @@
+📋 RESUMEN: IMPLEMENTACIÓN DE CAMPO "CONVENIO" EN USUARIOS
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ CAMBIOS REALIZADOS
+
+1️⃣ FRONTEND (frontend/src/pages/Usuarios/Usuarios.js)
+   ├─ ✅ Columna "Convenio" en tabla DataGrid
+   │  └─ Indicador visual: 🟢 Verde (Dentro) / 🔴 Rojo (Fuera)
+   ├─ ✅ Campo select en Formulario de Crear Usuario
+   │  └─ Posición: Entre fecha_nacimiento y password
+   │  └─ Opciones: ✅ Dentro de Convenio / ❌ Fuera de Convenio
+   └─ ✅ Campo select en Formulario de Editar Usuario
+      └─ Posición: Entre Rol y Referente
+      └─ Opciones: ✅ Dentro de Convenio / ❌ Fuera de Convenio
+
+2️⃣ BACKEND (backend/controllers/usuariosController.js)
+   ├─ ✅ listarUsuarios() - Incluye convenio en SELECT
+   ├─ ✅ crearUsuario() - Acepta y almacena convenio
+   │  └─ Default: 'dentro' si no se envía
+   └─ ✅ editarUsuario() - Acepta y actualiza convenio
+      └─ Default: 'dentro' si no se envía
+
+3️⃣ DATABASE SCRIPTS
+   ├─ ✅ backend/scripts/add-convenio-column.sql
+   │  └─ Sentencias SQL para migración manual
+   └─ ✅ backend/scripts/add-convenio-migration.js
+      └─ Script Node.js para migración automática
+
+4️⃣ DOCUMENTACIÓN
+   ├─ ✅ MIGRACION_CONVENIO.md - Guía completa
+   ├─ ✅ CAMBIOS_CONVENIO.md - Resumen de cambios
+   └─ ✅ ACTIVAR_CONVENIO.md - Paso a paso
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🚀 PRÓXIMOS PASOS (TODO)
+
+1. Aplicar migración a base de datos:
+   cd backend
+   node scripts/add-convenio-migration.js
+
+2. Reiniciar backend:
+   npm start
+
+3. Probar en frontend:
+   - Crear usuario con convenio
+   - Editar usuario y cambiar convenio
+   - Verificar columna en tabla
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📊 ESTRUCTURA DE LA IMPLEMENTACIÓN
+
+┌─────────────────────────────────────────────────────────────────┐
+│                         BASE DE DATOS                           │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │ tabla: usuarios                                          │  │
+│  │ ├─ id INT PRIMARY KEY                                   │  │
+│  │ ├─ legajo VARCHAR(20) UNIQUE                            │  │
+│  │ ├─ dni VARCHAR(8) UNIQUE                                │  │
+│  │ ├─ nombre VARCHAR(100)                                  │  │
+│  │ ├─ apellido VARCHAR(100)                                │  │
+│  │ ├─ correo VARCHAR(100) UNIQUE                           │  │
+│  │ ├─ rol VARCHAR(50)                                      │  │
+│  │ ├─ activo TINYINT(1)                                    │  │
+│  │ ├─ referente_id INT                                     │  │
+│  │ └─ convenio VARCHAR(20) DEFAULT 'dentro' ← NUEVO        │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                             ↓↑
+              ┌──────────────────────────────┐
+              │    BACKEND API (Node.js)     │
+              ├──────────────────────────────┤
+              │ POST /api/usuarios           │ → Crea con convenio
+              │ GET /api/usuarios            │ → Retorna convenio
+              │ GET /api/usuarios/:id        │ → Retorna convenio
+              │ PUT /api/usuarios/:id        │ → Actualiza convenio
+              └──────────────────────────────┘
+                             ↓↑
+              ┌──────────────────────────────┐
+              │   FRONTEND (React/MUI)       │
+              ├──────────────────────────────┤
+              │ Usuarios.js                  │
+              │ ├─ DataGrid Convenio Column  │
+              │ ├─ Create Form Convenio      │
+              │ └─ Edit Form Convenio        │
+              └──────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔄 FLUJO DE DATOS
+
+A) CREAR USUARIO CON CONVENIO:
+
+   Frontend                Backend                Database
+   ────────                ───────                ────────
+   
+   Usuario completa
+   formulario con
+   convenio: "fuera"
+           │
+           ├──────────────→ POST /api/usuarios
+                           │
+                           ├─ Valida campos
+                           ├─ Hash contraseña
+                           ├─ Inserta en usuarios
+                           │  (legajo, dni, nombre, ..., convenio)
+                           │
+                           └──────────────────→ INSERT INTO usuarios
+                                               (legajo, dni, ..., convenio)
+                                               VALUES (..., 'fuera')
+
+B) EDITAR USUARIO Y CAMBIAR CONVENIO:
+
+   Frontend                Backend                Database
+   ────────                ───────                ────────
+   
+   Usuario selecciona
+   nuevo valor
+   convenio: "dentro"
+           │
+           ├──────────────→ PUT /api/usuarios/:id
+                           │
+                           ├─ Valida permisos
+                           ├─ Actualiza en usuarios
+                           │  (SET convenio = ?)
+                           │
+                           └──────────────────→ UPDATE usuarios
+                                               SET convenio = 'dentro'
+                                               WHERE id = ?
+
+C) LISTAR USUARIOS:
+
+   Frontend                Backend                Database
+   ────────                ───────                ────────
+   
+   Carga tabla de
+   usuarios
+           │
+           ├──────────────→ GET /api/usuarios
+                           │
+                           └──────────────────→ SELECT id, legajo, dni,
+                                                   nombre, apellido,
+                                                   correo, rol, convenio
+                                               FROM usuarios
+                                               │
+           ←──────────────────────────────────────────────┘
+           │
+           ├─ Muestra tabla con columna convenio
+           │  - 🟢 Verde para "dentro"
+           │  - 🔴 Rojo para "fuera"
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📋 VALORES PERMITIDOS
+
+Convenio: VARCHAR(20)
+└─ "dentro"  → Empleado dentro de convenio (valor por defecto)
+└─ "fuera"   → Empleado fuera de convenio
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔍 VERIFICACIÓN
+
+Después de aplicar migración, verificar:
+
+1. Base de datos:
+   DESCRIBE usuarios;
+   ↓
+   Debe mostrar: convenio VARCHAR(20) DEFAULT 'dentro'
+
+2. API:
+   GET http://localhost:3001/api/usuarios
+   ↓
+   Cada usuario debe tener: "convenio": "dentro" | "fuera"
+
+3. Frontend:
+   - Crear usuario: Campo convenio visible en formulario
+   - Editar usuario: Campo convenio visible en formulario
+   - Tabla usuarios: Columna convenio visible con indicadores
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✨ CARACTERÍSTICAS
+
+✅ Idempotente: Seguro ejecutar el script múltiples veces
+✅ Backward compatible: Usuarios existentes tendrán "dentro"
+✅ Optimizado: Índice creado para búsquedas rápidas
+✅ Validado: Fallback a "dentro" si no se envía valor
+✅ Visual: Indicadores de color en tabla DataGrid
+✅ Documentado: Guías completas incluidas
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📁 ARCHIVOS MODIFICADOS/CREADOS
+
+Modificados:
+├─ frontend/src/pages/Usuarios/Usuarios.js (actualizado)
+└─ backend/controllers/usuariosController.js (actualizado)
+
+Creados:
+├─ backend/scripts/add-convenio-column.sql (migración SQL)
+├─ backend/scripts/add-convenio-migration.js (script Node.js)
+├─ MIGRACION_CONVENIO.md (documentación completa)
+├─ CAMBIOS_CONVENIO.md (resumen de cambios)
+└─ ACTIVAR_CONVENIO.md (paso a paso)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 ESTADO: LISTO PARA ACTIVACIÓN
+
+Todo está preparado. Solo necesitas:
+
+1. Ejecutar: node scripts/add-convenio-migration.js
+2. Reiniciar: npm start
+3. Probar: Crear/editar usuario con convenio
+
+¡Implementación completada! 🎉
+
+═══════════════════════════════════════════════════════════════════════════════

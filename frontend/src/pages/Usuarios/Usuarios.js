@@ -60,7 +60,8 @@ const Usuarios = () => {
   rol: 'empleado',
   cuil: '',
   fecha_nacimiento: '',
-  referente_id: ''
+  referente_id: '',
+  convenio: 'dentro'
 });
 
 // Estado para checklist de contraseña
@@ -888,17 +889,37 @@ const descargarPlantilla = async () => {
 
 
 const columns = [
-  { field: 'id', headerName: 'ID', width: 70 },
+  { field: 'id', headerName: 'ID', width: 100 },
   { field: 'legajo', headerName: 'Legajo', width: 100 },
   { field: 'dni', headerName: 'DNI', width: 100 },
-  { field: 'nombre', headerName: 'Nombre', width: 150 },
-  { field: 'apellido', headerName: 'Apellido', width: 150 },
-  { field: 'correo', headerName: 'Correo', width: 200 },
-  { field: 'rol', headerName: 'Rol', width: 120 },
+  { field: 'nombre', headerName: 'Nombre', width: 300 },
+  { field: 'apellido', headerName: 'Apellido', width: 300 },
+  { field: 'correo', headerName: 'Correo', width: 300 },
+  { field: 'rol', headerName: 'Rol', width: 150 },
+  {
+    field: 'convenio',
+    headerName: 'Convenio',
+    width: 150,
+    renderCell: (params) => (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {params.row.convenio === 'dentro' ? (
+          <>
+            <Box sx={{ width: 8, height: 8, bgcolor: '#4caf50', borderRadius: '50%' }} />
+            <span>Dentro</span>
+          </>
+        ) : (
+          <>
+            <Box sx={{ width: 8, height: 8, bgcolor: '#f44336', borderRadius: '50%' }} />
+            <span>Fuera</span>
+          </>
+        )}
+      </Box>
+    )
+  },
   {
     field: 'acciones',
     headerName: 'Acciones',
-    width: 140,
+    width: 180,
     renderCell: (params) => {
       // Verificar si el usuario es superadmin
       const esSuperAdmin = params.row.rol === 'superadmin';
@@ -955,7 +976,7 @@ const columns = [
 ];
   const [editando, setEditando] = useState(null);
 const [usuarioEditado, setUsuarioEditado] = useState({
-  legajo: '', dni: '', nombre: '', apellido: '', correo: '', rol: 'empleado', activo: 1, password: '', referente_id: ''
+  legajo: '', dni: '', nombre: '', apellido: '', correo: '', rol: 'empleado', activo: 1, password: '', referente_id: '', convenio: 'dentro'
 });
 
 const handleEditar = (usuario) => {
@@ -990,7 +1011,7 @@ const usuariosFiltrados = usuarios.filter((u) =>
 );
 
   return (
-    <Box sx={{ height: 600, width: '95%', p: 3 }}>
+    <Box sx={{ height: 600, width: '100%', p: 3 }}>
       <Typography variant="h4" gutterBottom sx={{ 
         fontWeight: 'bold', 
         color: 'primary.main',
@@ -1095,8 +1116,7 @@ const usuariosFiltrados = usuarios.filter((u) =>
         border: '1px solid #e2e8f0',
         backgroundColor: 'white',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        width: 'fit-content',
-        maxWidth: 1000,
+        width: '100%',
         margin: '0 auto'
       }}>
         <DataGrid
@@ -1252,6 +1272,18 @@ const usuariosFiltrados = usuarios.filter((u) =>
               onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, fecha_nacimiento: e.target.value })}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
+            <TextField 
+              select
+              label="📋 Convenio"
+              fullWidth
+              margin="normal"
+              value={nuevoUsuario.convenio}
+              onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, convenio: e.target.value })}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            >
+              <MenuItem value="dentro">✅ Dentro de Convenio</MenuItem>
+              <MenuItem value="fuera">❌ Fuera de Convenio</MenuItem>
+            </TextField>
             <TextField 
               label="🔐 Contraseña" 
               type="password" 
@@ -1434,6 +1466,18 @@ const usuariosFiltrados = usuarios.filter((u) =>
       {user?.rol === 'superadmin' && (
         <MenuItem value="superadmin">Super Admin</MenuItem>
       )}
+    </TextField>
+    
+    <TextField 
+      select
+      label="Convenio"
+      fullWidth
+      margin="normal"
+      value={usuarioEditado.convenio || 'dentro'}
+      onChange={(e) => setUsuarioEditado({ ...usuarioEditado, convenio: e.target.value })}
+    >
+      <MenuItem value="dentro">✅ Dentro de Convenio</MenuItem>
+      <MenuItem value="fuera">❌ Fuera de Convenio</MenuItem>
     </TextField>
     
     {/* Mostrar selector de referente solo si el rol es empleado */}

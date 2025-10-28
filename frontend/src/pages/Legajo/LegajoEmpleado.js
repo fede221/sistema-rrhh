@@ -15,20 +15,13 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import HomeIcon from '@mui/icons-material/Home';
 import PhoneIcon from '@mui/icons-material/Phone';
 import WorkIcon from '@mui/icons-material/Work';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-// removed unused icons: FingerprintIcon, WcIcon, FavoriteIcon
-import PublicIcon from '@mui/icons-material/Public';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import ContactPhoneIcon from '@mui/icons-material/ContactPhone';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import AssignmentIcon from '@mui/icons-material/Assignment';
 import { getToken } from '../../utils/auth';
 
-// Unified color scheme
+// Unified color scheme - Consistente con la app
 const primaryColor = '#1976d2';
-const headerGradientStart = '#667eea';
-const headerGradientEnd = '#764ba2';
 const iconBg = '#e8f4ff';
+const lightGray = '#fbfdff';
+const borderColor = '#e6eef9';
 
 const LegajoEmpleado = () => {
   const [legajo, setLegajo] = useState(null);
@@ -176,50 +169,19 @@ const LegajoEmpleado = () => {
     }
   };
 
-  // CampoCard removed: using InfoRow for unified styling across the page
-
-  // Reusable row component: left label (primaryColor), right value/input
-  const InfoRow = ({ label, campoKey, value, editable = false, type, options = [], icon: Icon, color = primaryColor, index = 0 }) => (
-    <Box sx={{ display: 'flex', alignItems: 'center', py: 2, px: 3, bgcolor: index % 2 === 0 ? 'white' : '#fbfdff', borderBottom: '1px solid #e6eef9' }}>
-      <Box sx={{ width: 220, display: 'flex', alignItems: 'center' }}>
-        {Icon && (
-          <Avatar sx={{ bgcolor: iconBg, width: 32, height: 32, mr: 1.5 }}>
-            <Icon sx={{ fontSize: 18, color: color }} />
-          </Avatar>
-        )}
-        <Typography sx={{ color: color, fontWeight: 700 }}>{label}</Typography>
-      </Box>
-      <Box sx={{ flex: 1 }}>
-        {modoEdicion && editable ? (
-          type === 'date' ? (
-            <TextField type="date" value={datosEditables[campoKey]} onChange={(e) => handleCambio(campoKey, e.target.value)} fullWidth InputLabelProps={{ shrink: true }} />
-          ) : type === 'select' ? (
-            <FormControl fullWidth>
-              <Select value={datosEditables[campoKey]} onChange={(e) => handleCambio(campoKey, e.target.value)}>
-                {options.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
-              </Select>
-            </FormControl>
-          ) : (
-            <TextField fullWidth value={datosEditables[campoKey] || ''} onChange={(e) => handleCambio(campoKey, e.target.value)} />
-          )
-        ) : (
-          <Typography sx={{ color: '#333' }}>{(datosEditables[campoKey] !== undefined && datosEditables[campoKey] !== '') ? datosEditables[campoKey] : (value !== undefined ? value : (legajo[campoKey] || '-'))}</Typography>
-        )}
-      </Box>
-    </Box>
-  );
+  // CampoCard removed: using inline rendering for unified styling
 
   return (
-    <Box sx={{ p: 3, background: 'linear-gradient(90deg, #e3f2fd 0%, #fff 100%)', minHeight: '100vh' }}>
+    <Box sx={{ p: 3, bgcolor: '#f9f9f9', minHeight: '100vh' }}>
       <Zoom in={true} timeout={500}>
         <Paper
-          elevation={8}
+          elevation={1}
           sx={{
             p: 4,
-            maxWidth: 800,
+            maxWidth: 900,
             margin: '0 auto',
-            borderRadius: 4,
-            background: '#ffffff'
+            borderRadius: 2,
+            bgcolor: 'white'
           }}
         >
           {/* Header */}
@@ -229,9 +191,9 @@ const LegajoEmpleado = () => {
             alignItems: 'center',
             mb: 4,
             p: 3,
-            background: primaryColor,
-            borderRadius: 3,
-            boxShadow: 3
+            bgcolor: primaryColor,
+            borderRadius: 2,
+            boxShadow: 2
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Avatar sx={{
@@ -240,7 +202,7 @@ const LegajoEmpleado = () => {
                 width: 70,
                 height: 70,
                 mr: 2,
-                boxShadow: 3,
+                boxShadow: 2,
                 fontWeight: 'bold'
               }}>
                 <Typography sx={{ color: primaryColor, fontWeight: '700', fontSize: 28 }}>
@@ -255,7 +217,7 @@ const LegajoEmpleado = () => {
                   <Chip
                     label={`Legajo: ${legajo.legajo}`}
                     sx={{
-                      bgcolor: 'rgba(255,255,255,0.3)',
+                      bgcolor: 'rgba(255,255,255,0.2)',
                       color: 'white',
                       fontWeight: 'bold',
                       backdropFilter: 'blur(10px)'
@@ -264,13 +226,12 @@ const LegajoEmpleado = () => {
                 ) : null}
               </Box>
             </Box>
-            {/* header edit button removed - use the blue 'EDITAR DATOS PERSONALES' button below */}
           </Box>
 
           {/* Datos Personales (estilo tabla) */}
           <Fade in={true} timeout={800}>
             <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <Avatar sx={{ bgcolor: iconBg, color: primaryColor, mr: 2 }}>
                     <BadgeIcon />
@@ -280,20 +241,19 @@ const LegajoEmpleado = () => {
                   </Typography>
                 </Box>
                 {!modoEdicion && (
-                    <Button
+                  <Button
                     variant="contained"
                     size="small"
                     onClick={handleEditarClick}
                     startIcon={<EditIcon />}
                     sx={{ bgcolor: primaryColor, textTransform: 'none' }}
                   >
-                    EDITAR DATOS PERSONALES
+                    EDITAR
                   </Button>
                 )}
               </Box>
 
               <Box sx={{ mt: 2, borderRadius: 1, overflow: 'hidden', boxShadow: 1 }}>
-                {/* Rows: left label (blue), right value/input */}
                 {[
                   { key: 'nombre', label: 'Nombre', editable: true },
                   { key: 'apellido', label: 'Apellido', editable: true },
@@ -307,10 +267,10 @@ const LegajoEmpleado = () => {
                 ].map((field, idx) => (
                   <Box
                     key={field.key}
-                    sx={{ display: 'flex', alignItems: 'center', py: 2, px: 3, bgcolor: idx % 2 === 0 ? 'white' : '#fbfdff', borderBottom: '1px solid #e6eef9' }}
+                    sx={{ display: 'flex', alignItems: 'center', py: 2, px: 3, bgcolor: idx % 2 === 0 ? 'white' : lightGray, borderBottom: `1px solid ${borderColor}` }}
                   >
                     <Box sx={{ width: 220 }}>
-                      <Typography sx={{ color: '#1976d2', fontWeight: 700 }}>{field.label}</Typography>
+                      <Typography sx={{ color: primaryColor, fontWeight: 700 }}>{field.label}</Typography>
                     </Box>
                     <Box sx={{ flex: 1 }}>
                       {modoEdicion && field.editable ? (
@@ -342,7 +302,6 @@ const LegajoEmpleado = () => {
                         )
                       ) : (
                         <Typography sx={{ color: '#333' }}>{
-                          // show value from datosEditables if present (after save) else from legajo
                           (datosEditables[field.key] !== undefined && datosEditables[field.key] !== '') ? datosEditables[field.key] : (field.value !== undefined ? field.value : (legajo[field.key] || '-'))
                         }</Typography>
                       )}
@@ -352,70 +311,105 @@ const LegajoEmpleado = () => {
               </Box>
             </Box>
           </Fade>
- 
 
-          <Divider sx={{ my: 4, borderStyle: 'dashed', borderColor: primaryColor, opacity: 0.3 }} />
+          <Divider sx={{ my: 4 }} />
 
           {/* Domicilio */}
           <Fade in={true} timeout={1000}>
             <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Avatar sx={{ bgcolor: iconBg, color: primaryColor, mr: 2, boxShadow: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Avatar sx={{ bgcolor: iconBg, color: primaryColor, mr: 2 }}>
                   <HomeIcon />
                 </Avatar>
-                <Typography variant="h5" sx={{ fontWeight: 'bold', color: primaryColor }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', color: primaryColor }}>
                   Domicilio
                 </Typography>
               </Box>
 
               <Box sx={{ mt: 2, borderRadius: 1, overflow: 'hidden', boxShadow: 1 }}>
                 {[
-                  { key: 'domicilio', label: 'Domicilio', editable: true, icon: HomeIcon },
-                  { key: 'localidad', label: 'Localidad', editable: true, icon: LocationOnIcon },
-                  { key: 'provincia', label: 'Provincia', editable: true, icon: PublicIcon },
-                  { key: 'codigo_postal', label: 'Código Postal', editable: true, icon: LocationOnIcon }
+                  { key: 'domicilio', label: 'Domicilio', editable: true },
+                  { key: 'localidad', label: 'Localidad', editable: true },
+                  { key: 'provincia', label: 'Provincia', editable: true },
+                  { key: 'codigo_postal', label: 'Código Postal', editable: true }
                 ].map((f, i) => (
-                  <InfoRow key={f.key} label={f.label} campoKey={f.key} editable={f.editable} icon={f.icon} color="#43a047" index={i} />
+                  <Box
+                    key={f.key}
+                    sx={{ display: 'flex', alignItems: 'center', py: 2, px: 3, bgcolor: i % 2 === 0 ? 'white' : lightGray, borderBottom: `1px solid ${borderColor}` }}
+                  >
+                    <Box sx={{ width: 220 }}>
+                      <Typography sx={{ color: primaryColor, fontWeight: 700 }}>{f.label}</Typography>
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      {modoEdicion && f.editable ? (
+                        <TextField
+                          fullWidth
+                          value={datosEditables[f.key] || ''}
+                          onChange={(e) => handleCambio(f.key, e.target.value)}
+                        />
+                      ) : (
+                        <Typography sx={{ color: '#333' }}>{datosEditables[f.key] || legajo[f.key] || '-'}</Typography>
+                      )}
+                    </Box>
+                  </Box>
                 ))}
               </Box>
             </Box>
           </Fade>
 
-          <Divider sx={{ my: 4, borderStyle: 'dashed', borderColor: primaryColor, opacity: 0.3 }} />
+          <Divider sx={{ my: 4 }} />
 
           {/* Contacto */}
           <Fade in={true} timeout={1200}>
             <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Avatar sx={{ bgcolor: iconBg, color: primaryColor, mr: 2, boxShadow: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Avatar sx={{ bgcolor: iconBg, color: primaryColor, mr: 2 }}>
                   <PhoneIcon />
                 </Avatar>
-                <Typography variant="h5" sx={{ fontWeight: 'bold', color: primaryColor }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', color: primaryColor }}>
                   Contacto
                 </Typography>
               </Box>
 
               <Box sx={{ mt: 2, borderRadius: 1, overflow: 'hidden', boxShadow: 1 }}>
                 {[
-                  { key: 'telefono_contacto', label: 'Teléfono', editable: true, icon: PhoneIcon },
-                  { key: 'contacto_emergencia', label: 'Contacto Emergencia', editable: true, icon: ContactPhoneIcon }
+                  { key: 'telefono_contacto', label: 'Teléfono', editable: true },
+                  { key: 'contacto_emergencia', label: 'Contacto Emergencia', editable: true }
                 ].map((f, i) => (
-                  <InfoRow key={f.key} label={f.label} campoKey={f.key} editable={f.editable} icon={f.icon} color="#fb8c00" index={i} />
+                  <Box
+                    key={f.key}
+                    sx={{ display: 'flex', alignItems: 'center', py: 2, px: 3, bgcolor: i % 2 === 0 ? 'white' : lightGray, borderBottom: `1px solid ${borderColor}` }}
+                  >
+                    <Box sx={{ width: 220 }}>
+                      <Typography sx={{ color: primaryColor, fontWeight: 700 }}>{f.label}</Typography>
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      {modoEdicion && f.editable ? (
+                        <TextField
+                          fullWidth
+                          value={datosEditables[f.key] || ''}
+                          onChange={(e) => handleCambio(f.key, e.target.value)}
+                        />
+                      ) : (
+                        <Typography sx={{ color: '#333' }}>{datosEditables[f.key] || legajo[f.key] || '-'}</Typography>
+                      )}
+                    </Box>
+                  </Box>
                 ))}
               </Box>
             </Box>
           </Fade>
 
-          <Divider sx={{ my: 4, borderStyle: 'dashed', borderColor: primaryColor, opacity: 0.3 }} />
+          <Divider sx={{ my: 4 }} />
 
           {/* Datos Laborales - Solo lectura */}
           <Fade in={true} timeout={1400}>
             <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Avatar sx={{ bgcolor: iconBg, color: primaryColor, mr: 2, boxShadow: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Avatar sx={{ bgcolor: iconBg, color: primaryColor, mr: 2 }}>
                   <WorkIcon />
                 </Avatar>
-                <Typography variant="h5" sx={{ fontWeight: 'bold', color: primaryColor }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', color: primaryColor }}>
                   Datos Laborales
                 </Typography>
                 <Chip
@@ -427,24 +421,36 @@ const LegajoEmpleado = () => {
 
               <Box sx={{ mt: 2, borderRadius: 1, overflow: 'hidden', boxShadow: 1 }}>
                 {[
-                  { key: 'fecha_ingreso', label: 'Fecha Ingreso', editable: false, icon: CalendarMonthIcon },
-                  { key: 'centro_costos', label: 'Centro de Costos', editable: false, icon: WorkIcon },
-                  { key: 'tarea_desempenada', label: 'Tarea', editable: false, icon: AssignmentIcon },
-                  { key: 'banco_destino', label: 'Banco', editable: false, icon: AccountBalanceIcon },
-                  { key: 'cuenta_bancaria', label: 'Cuenta Bancaria', editable: false, icon: AccountBalanceIcon }
+                  { key: 'fecha_ingreso', label: 'Fecha Ingreso' },
+                  { key: 'centro_costos', label: 'Centro de Costos' },
+                  { key: 'tarea_desempenada', label: 'Tarea' },
+                  { key: 'banco_destino', label: 'Banco' },
+                  { key: 'cuenta_bancaria', label: 'Cuenta Bancaria' }
                 ].map((f, i) => (
-                  <InfoRow key={f.key} label={f.label} campoKey={f.key} editable={f.editable} icon={f.icon} color="#5c6bc0" index={i} value={f.key === 'fecha_ingreso' ? formatFecha(legajo.fecha_ingreso) : undefined} />
+                  <Box
+                    key={f.key}
+                    sx={{ display: 'flex', alignItems: 'center', py: 2, px: 3, bgcolor: i % 2 === 0 ? 'white' : lightGray, borderBottom: `1px solid ${borderColor}` }}
+                  >
+                    <Box sx={{ width: 220 }}>
+                      <Typography sx={{ color: primaryColor, fontWeight: 700 }}>{f.label}</Typography>
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography sx={{ color: '#333' }}>
+                        {f.key === 'fecha_ingreso' ? formatFecha(legajo.fecha_ingreso) : (legajo[f.key] || '-')}
+                      </Typography>
+                    </Box>
+                  </Box>
                 ))}
               </Box>
             </Box>
           </Fade>
 
           {/* Botones de acción */}
-          <Divider sx={{ my: 4, borderStyle: 'solid', borderWidth: 2, borderColor: '#667eea', opacity: 0.2 }} />
+          <Divider sx={{ my: 4 }} />
 
           {modoEdicion ? (
             <Zoom in={true}>
-              <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', mt: 3 }}>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 3 }}>
                 <Button
                   variant="contained"
                   startIcon={<SaveIcon />}
@@ -452,22 +458,20 @@ const LegajoEmpleado = () => {
                   disabled={guardando}
                   size="large"
                   sx={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    bgcolor: primaryColor,
                     color: 'white',
                     fontWeight: 'bold',
-                    px: 5,
-                    py: 1.5,
-                    borderRadius: 3,
-                    boxShadow: 4,
+                    px: 4,
+                    py: 1.2,
+                    borderRadius: 1,
+                    boxShadow: 1,
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
-                      transform: 'scale(1.05)',
-                      boxShadow: 6
+                      bgcolor: '#1565c0',
+                      boxShadow: 2
                     },
                     '&:disabled': {
-                      background: '#ccc'
-                    },
-                    transition: 'all 0.3s ease'
+                      bgcolor: '#ccc'
+                    }
                   }}
                 >
                   {guardando ? 'Guardando...' : 'Guardar Cambios'}
@@ -479,21 +483,16 @@ const LegajoEmpleado = () => {
                   disabled={guardando}
                   size="large"
                   sx={{
-                    borderColor: '#f50057',
-                    color: '#f50057',
+                    borderColor: '#d32f2f',
+                    color: '#d32f2f',
                     fontWeight: 'bold',
-                    px: 5,
-                    py: 1.5,
-                    borderRadius: 3,
-                    borderWidth: 2,
+                    px: 4,
+                    py: 1.2,
+                    borderRadius: 1,
                     '&:hover': {
-                      borderColor: '#f50057',
-                      bgcolor: '#f500570a',
-                      borderWidth: 2,
-                      transform: 'scale(1.05)',
-                      boxShadow: 4
-                    },
-                    transition: 'all 0.3s ease'
+                      bgcolor: '#d32f2f10',
+                      borderColor: '#d32f2f'
+                    }
                   }}
                 >
                   Cancelar
@@ -504,14 +503,14 @@ const LegajoEmpleado = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 3,
-                background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
-                borderRadius: 3,
-                border: '2px dashed #667eea'
+                p: 2,
+                bgcolor: '#f5f5f5',
+                borderRadius: 1,
+                border: `1px solid ${borderColor}`
               }}
             >
-              <Typography variant="body1" align="center" sx={{ color: '#667eea', fontWeight: 500 }}>
-                💼 Si algún dato laboral es incorrecto, comunicate con RRHH.
+              <Typography variant="body2" align="center" sx={{ color: 'text.secondary' }}>
+                Si algún dato laboral es incorrecto, comunícate con RRHH.
               </Typography>
             </Paper>
           )}

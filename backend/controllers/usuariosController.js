@@ -24,7 +24,7 @@ const { validatePassword } = require('../utils/passwordValidator');
 
 
 exports.listarUsuarios = (req, res) => {
-  const sql = 'SELECT id, legajo, dni, nombre, apellido, correo, rol, activo, referente_id FROM usuarios';
+  const sql = 'SELECT id, legajo, dni, nombre, apellido, correo, rol, activo, referente_id, convenio FROM usuarios';
 
   db.query(sql, (err, results) => {
     if (err) {
@@ -50,7 +50,8 @@ exports.crearUsuario = async (req, res) => {
     rol,
     cuil,
     fecha_nacimiento,
-    referente_id
+    referente_id,
+    convenio
   } = req.body;
  
   // Validación detallada de campos
@@ -228,11 +229,11 @@ exports.crearUsuario = async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
 
     const sqlUsuario = `
-      INSERT INTO usuarios (legajo, dni, nombre, apellido, correo, password, rol, activo, referente_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
+      INSERT INTO usuarios (legajo, dni, nombre, apellido, correo, password, rol, activo, referente_id, convenio)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
     `;
 
-    db.query(sqlUsuario, [legajo, dni, nombre, apellido, correo, hash, rol, referente_id || null], (err, result) => {
+    db.query(sqlUsuario, [legajo, dni, nombre, apellido, correo, hash, rol, referente_id || null, convenio || 'dentro'], (err, result) => {
       if (err) {
         // Error más específico basado en el código de MySQL
         let errorMsg = 'Error interno al crear usuario';
@@ -380,7 +381,8 @@ exports.editarUsuario = (req, res) => {
     rol,
     activo,
     password,
-    referente_id
+    referente_id,
+    convenio
   } = req.body;
   
   const usuarioActual = req.user;
@@ -418,9 +420,10 @@ exports.editarUsuario = (req, res) => {
       'correo = ?',
       'rol = ?',
       'activo = ?',
-      'referente_id = ?'
+      'referente_id = ?',
+      'convenio = ?'
     ];
-    const values = [legajo, dni, nombre, apellido, correo, rol, activo, referente_id];
+    const values = [legajo, dni, nombre, apellido, correo, rol, activo, referente_id, convenio || 'dentro'];
 
     const terminarYActualizar = (passwordHash) => {
       if (passwordHash) {

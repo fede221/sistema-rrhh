@@ -1,17 +1,16 @@
 import { API_BASE_URL } from '../../config';
 import React, { useEffect, useState } from 'react';
 import { Typography, Box, Paper, Grid, Divider } from '@mui/material';
-import { getToken, getUser } from '../../utils/auth';
+import { getToken } from '../../utils/auth';
 
 const Legajo = () => {
   const [legajo, setLegajo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const user = getUser && getUser();
 
   useEffect(() => {
     const fetchLegajo = async () => {
       try {
-  const res = await fetch(`${API_BASE_URL}/api/usuarios/mi-legajo`, {
+        const res = await fetch(`${API_BASE_URL}/api/usuarios/mi-legajo`, {
           headers: { Authorization: `Bearer ${getToken && getToken()}` }
         });
         const data = await res.json();
@@ -57,34 +56,79 @@ const Legajo = () => {
     return fecha;
   };
 
+  // Componente reutilizable para cada campo
+  const FieldRow = ({ label, value }) => {
+    if (!value) return null;
+    return (
+      <Box sx={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 2, py: 1 }}>
+        <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+          {label}
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {value}
+        </Typography>
+      </Box>
+    );
+  };
+
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom>Mi Legajo</Typography>
-      <Paper elevation={3} sx={{ p: 2, maxWidth: 1100, margin: '0 auto', overflowX: 'auto' }}>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
-          {legajo.domicilio && <span><b>Domicilio:</b> {legajo.domicilio}</span>}
-          {legajo.localidad && <span><b>Localidad:</b> {legajo.localidad}</span>}
-          {legajo.fecha_nacimiento && <span><b>Fecha de nacimiento:</b> {formatFecha(legajo.fecha_nacimiento)}</span>}
-          {legajo.cuil && <span><b>CUIL:</b> {legajo.cuil}</span>}
-          {legajo.centro_costos && <span><b>Centro de costos:</b> {legajo.centro_costos}</span>}
-          {legajo.tarea_desempenada && <span><b>Tarea:</b> {legajo.tarea_desempenada}</span>}
-          {legajo.legajo && <span><b>Legajo:</b> {legajo.legajo}</span>}
-          {legajo.nro_documento && <span><b>DNI:</b> {legajo.nro_documento}</span>}
-          {legajo.nombre && legajo.apellido && <span><b>Nombre:</b> {legajo.nombre} {legajo.apellido}</span>}
-          {legajo.fecha_ingreso && <span><b>Fecha de ingreso:</b> {formatFecha(legajo.fecha_ingreso)}</span>}
-          {legajo.codigo_postal && <span><b>Código Postal:</b> {legajo.codigo_postal}</span>}
-          {legajo.telefono_contacto && <span><b>Teléfono:</b> {legajo.telefono_contacto}</span>}
-          {legajo.contacto_emergencia && <span><b>Contacto Emergencia:</b> {legajo.contacto_emergencia}</span>}
-          {legajo.estado_civil && <span><b>Estado Civil:</b> {legajo.estado_civil}</span>}
-          {legajo.cuenta_bancaria && <span><b>Cuenta Bancaria:</b> {legajo.cuenta_bancaria}</span>}
-          {legajo.banco_destino && <span><b>Banco:</b> {legajo.banco_destino}</span>}
-          {legajo.sexo && <span><b>Sexo:</b> {legajo.sexo}</span>}
-          {legajo.tipo_documento && <span><b>Tipo Documento:</b> {legajo.tipo_documento}</span>}
-          {legajo.nacionalidad && <span><b>Nacionalidad:</b> {legajo.nacionalidad}</span>}
-          {legajo.provincia && <span><b>Provincia:</b> {legajo.provincia}</span>}
-        </Box>
-        <Divider sx={{ my: 2 }} />
-        <Typography variant="body2" color="text.secondary">Si algún dato es incorrecto, comunicate con RRHH.</Typography>
+      <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>Mi Legajo</Typography>
+      <Paper elevation={2} sx={{ p: 3, maxWidth: 1100, margin: '0 auto' }}>
+        <Grid container spacing={3}>
+          {/* Sección: Datos Personales */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, pb: 1, borderBottom: '2px solid #1976d2' }}>
+              Datos Personales
+            </Typography>
+            <FieldRow label="Nombre" value={legajo.nombre && legajo.apellido ? `${legajo.nombre} ${legajo.apellido}` : legajo.nombre} />
+            <FieldRow label="DNI" value={legajo.nro_documento} />
+            <FieldRow label="Tipo Documento" value={legajo.tipo_documento} />
+            <FieldRow label="CUIL" value={legajo.cuil} />
+            <FieldRow label="Fecha de Nacimiento" value={formatFecha(legajo.fecha_nacimiento)} />
+            <FieldRow label="Sexo" value={legajo.sexo} />
+            <FieldRow label="Nacionalidad" value={legajo.nacionalidad} />
+            <FieldRow label="Estado Civil" value={legajo.estado_civil} />
+          </Grid>
+
+          {/* Sección: Datos de Contacto */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, pb: 1, borderBottom: '2px solid #388e3c' }}>
+              Datos de Contacto
+            </Typography>
+            <FieldRow label="Domicilio" value={legajo.domicilio} />
+            <FieldRow label="Localidad" value={legajo.localidad} />
+            <FieldRow label="Provincia" value={legajo.provincia} />
+            <FieldRow label="Código Postal" value={legajo.codigo_postal} />
+            <FieldRow label="Teléfono" value={legajo.telefono_contacto} />
+            <FieldRow label="Contacto Emergencia" value={legajo.contacto_emergencia} />
+          </Grid>
+
+          {/* Sección: Datos Laborales */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, pb: 1, borderBottom: '2px solid #f57c00' }}>
+              Datos Laborales
+            </Typography>
+            <FieldRow label="Legajo" value={legajo.legajo} />
+            <FieldRow label="Fecha de Ingreso" value={formatFecha(legajo.fecha_ingreso)} />
+            <FieldRow label="Tarea" value={legajo.tarea_desempenada} />
+            <FieldRow label="Centro de Costos" value={legajo.centro_costos} />
+          </Grid>
+
+          {/* Sección: Datos Bancarios */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, pb: 1, borderBottom: '2px solid #7b1fa2' }}>
+              Datos Bancarios
+            </Typography>
+            <FieldRow label="Banco" value={legajo.banco_destino} />
+            <FieldRow label="Cuenta Bancaria" value={legajo.cuenta_bancaria} />
+          </Grid>
+        </Grid>
+
+        <Divider sx={{ my: 3 }} />
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+          Si algún dato es incorrecto, comunícate con RRHH.
+        </Typography>
       </Paper>
     </Box>
   );
