@@ -55,30 +55,23 @@ Query OK, 40 rows affected
 
 ## Categorías de Preguntas
 
-Las 40 preguntas están distribuidas en 8 categorías:
+Las 40 preguntas cubren diferentes aspectos de la vida del usuario:
 
-| Categoría | Cantidad | Ejemplos |
-|-----------|----------|----------|
-| **personal** | 8 | Ciudad natal, nombre de mascota, mes de cumpleaños, etc. |
-| **familiar** | 3 | Nombre de madre, padre, hermanos, abuelos |
-| **gustos** | 13 | Películas, canciones, comida, colores, deportes, series, etc. |
-| **educacion** | 5 | Escuela, universidad, profesor, graduación, idioma |
-| **laboral** | 2 | Primer trabajo, nombre de jefe actual |
-| **social** | 1 | Nombre de mejor amigo |
-| **posesiones** | 2 | Marca de automóvil, primera bicicleta |
-| **tecnologia** | 1 | Aplicación móvil favorita |
-
-**Total: 40 preguntas**
+- Familia y relaciones personales
+- Gustos y preferencias
+- Educación y carrera
+- Vida personal y hitos importantes
+- Mascotas y animales
+- Entretenimiento
+- Tecnología
+- Y más...
 
 ## Estructura de la Tabla
 
 ```sql
 CREATE TABLE preguntas (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  pregunta VARCHAR(255) NOT NULL,
-  categoria VARCHAR(50),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  pregunta VARCHAR(255) NOT NULL
 );
 ```
 

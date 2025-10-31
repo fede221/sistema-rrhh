@@ -20,6 +20,7 @@ const bcrypt = require('bcrypt');
 const { logError } = require('../utils/errorLogger');
 const { logger } = require('../utils/secureLogger');
 const { validatePassword } = require('../utils/passwordValidator');
+const { isPasswordMarker, processPassword } = require('../utils/passwordGenerator');
 
 
 
@@ -675,8 +676,9 @@ exports.importarUsuariosMasivo = async (req, res) => {
       errores.push('Contraseña tiene un valor inválido');
     } else if (password.length > 255) {
       errores.push('Contraseña no puede tener más de 255 caracteres');
-    } else {
-      // 🛡️ Validación robusta de contraseña (8 chars, mayúscula, minúscula, número)
+    } else if (!isPasswordMarker(password)) {
+      // Solo validar si NO es un marcador especial (como [PRESENTE])
+      // Si es un marcador, será generada automáticamente
       const passwordValidation = validatePassword(password);
       if (!passwordValidation.valid) {
         errores.push(...passwordValidation.errors);
@@ -839,9 +841,20 @@ exports.importarUsuariosMasivo = async (req, res) => {
         continue;
       }
 
+      // Procesar contraseña: generar si es marcador
+      let passwordFinal = password;
+      let passwordWasGenerated = false;
+      
+      if (isPasswordMarker(password)) {
+        const result = processPassword(password, dni, apellido);
+        passwordFinal = result.password;
+        passwordWasGenerated = result.wasGenerated;
+        console.log(`🔑 Contraseña generada automáticamente para ${nombre} ${apellido} (método: ${result.method})`);
+      }
+
       // Hash de la contraseña
       console.log(`🔐 Hasheando password para ${nombre} ${apellido}`);
-      const hash = await bcrypt.hash(password, 10);
+      const hash = await bcrypt.hash(passwordFinal, 10);
 
       // Insertar usuario
       const usuarioCreado = await new Promise((resolve, reject) => {
@@ -912,8 +925,9 @@ exports.importarUsuariosMasivo = async (req, res) => {
         }
       }
 
-      // Crear legajo asociado
+      // Crear o actualizar legajo asociado
       await new Promise((resolve, reject) => {
+        // Usar INSERT ... ON DUPLICATE KEY UPDATE para crear o actualizar
         const sqlLegajo = `
           INSERT INTO legajos (
             usuario_id, numero_legajo, empresa_id, nombre, apellido, email_personal, nro_documento, cuil, 
@@ -922,9 +936,31 @@ exports.importarUsuariosMasivo = async (req, res) => {
             banco_destino, centro_costos, tarea_desempenada, sexo, tipo_documento,
             nacionalidad, provincia
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE
+            usuario_id = VALUES(usuario_id),
+            nombre = VALUES(nombre),
+            apellido = VALUES(apellido),
+            email_personal = VALUES(email_personal),
+            nro_documento = VALUES(nro_documento),
+            cuil = VALUES(cuil),
+            fecha_nacimiento = VALUES(fecha_nacimiento),
+            domicilio = VALUES(domicilio),
+            localidad = VALUES(localidad),
+            codigo_postal = VALUES(codigo_postal),
+            telefono_contacto = VALUES(telefono_contacto),
+            contacto_emergencia = VALUES(contacto_emergencia),
+            estado_civil = VALUES(estado_civil),
+            cuenta_bancaria = VALUES(cuenta_bancaria),
+            banco_destino = VALUES(banco_destino),
+            centro_costos = VALUES(centro_costos),
+            tarea_desempenada = VALUES(tarea_desempenada),
+            sexo = VALUES(sexo),
+            tipo_documento = VALUES(tipo_documento),
+            nacionalidad = VALUES(nacionalidad),
+            provincia = VALUES(provincia)
         `;
 
-        console.log(`📄 Creando legajo para usuario ID: ${usuarioCreado} con empresa ID: ${empresaId}`);
+        console.log(`📄 Creando o actualizando legajo para usuario ID: ${usuarioCreado} con empresa ID: ${empresaId}`);
         
         // Validar y convertir fecha de nacimiento
         let fechaNacimiento = usuario.fecha_nacimiento || null;
@@ -1025,9 +1061,9 @@ exports.importarUsuariosMasivo = async (req, res) => {
           limpiarCampo(usuario.provincia, 50) // provincia
         ], (err) => {
           if (err) {
-            console.log(`❌ Error al crear legajo:`, err);
+            console.log(`❌ Error al crear/actualizar legajo:`, err);
             // Error más específico para legajo
-            let errorMsg = 'Error interno al crear legajo';
+            let errorMsg = 'Error interno al crear/actualizar legajo';
             if (err.code === 'ER_DATA_TOO_LONG') {
               errorMsg = 'Algún campo del legajo excede la longitud máxima permitida';
             } else if (err.code === 'ER_BAD_NULL_ERROR') {
@@ -1037,7 +1073,7 @@ exports.importarUsuariosMasivo = async (req, res) => {
             }
             return reject(new Error(errorMsg));
           }
-          console.log(`✅ Legajo creado`);
+          console.log(`✅ Legajo creado o actualizado`);
           resolve();
         });
       });

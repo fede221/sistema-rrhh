@@ -499,7 +499,7 @@ const handleArchivoExcel = (event) => {
           nombre: limpiarCampo(nombre, 100),
           apellido: limpiarCampo(apellido, 100),
           correo: `${nombreLimpio}.${apellidoLimpio}@temp.com`,
-          password: dniLimpio, // Password automático usando el DNI
+          password: '[PRESENTE]', // Contraseña generada automáticamente por el backend
           rol: fila.rol || fila.Rol || fila.ROL || 'empleado',
           cuil: limpiarCampo(fila.CUIL || fila.cuil || fila.Cuil || '', 20),
           fecha_nacimiento: fechaConvertida,
