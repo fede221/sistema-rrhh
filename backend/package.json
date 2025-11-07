@@ -1,6 +1,6 @@
 {
   "name": "backend",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "main": "index.js",
   "scripts": {
     "test": "node scripts/test-create-user-and-legajo.js",

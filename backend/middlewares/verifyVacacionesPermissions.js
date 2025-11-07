@@ -4,7 +4,20 @@ const db = require('../config/db');
 // Middleware para verificar si el usuario puede aprobar vacaciones
 const verifyVacacionesApprover = (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    let token = null;
+    
+    // PRIORIDAD 1: Cookie (más seguro)
+    if (req.cookies && req.cookies.authToken) {
+      token = req.cookies.authToken;
+    }
+    
+    // PRIORIDAD 2: Header Authorization
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      }
+    }
     
     if (!token) {
       return res.status(401).json({ error: 'Token no proporcionado' });
@@ -57,8 +70,20 @@ const verifyVacacionesApprover = (req, res, next) => {
 // Middleware para verificar administración general (superadmin y admin_rrhh)
 const verifyAdmin = (req, res, next) => {
   try {
-    console.log('🔍 verifyAdmin - Iniciando verificación');
-    const token = req.headers.authorization?.split(' ')[1];
+    let token = null;
+    
+    // PRIORIDAD 1: Cookie (más seguro)
+    if (req.cookies && req.cookies.authToken) {
+      token = req.cookies.authToken;
+    }
+    
+    // PRIORIDAD 2: Header Authorization
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      }
+    }
     
     if (!token) {
       console.log('❌ verifyAdmin - Token no proporcionado');
@@ -73,7 +98,7 @@ const verifyAdmin = (req, res, next) => {
         return res.status(401).json({ error: 'Token inválido' });
       }
 
-      console.log('✅ verifyAdmin - Token válido, decoded:', decoded);
+      console.log('✅ verifyAdmin - Token válido');
 
       const query = 'SELECT id, rol, nombre, apellido FROM usuarios WHERE id = ? AND activo = 1';
       
@@ -83,20 +108,16 @@ const verifyAdmin = (req, res, next) => {
           return res.status(500).json({ error: 'Error de base de datos' });
         }
 
-        console.log('📊 verifyAdmin - Resultados de DB:', results);
-
         if (results.length === 0) {
           console.log('❌ verifyAdmin - Usuario no encontrado o inactivo');
           return res.status(401).json({ error: 'Usuario no encontrado o inactivo' });
         }
 
         const usuario = results[0];
-        console.log('👤 verifyAdmin - Usuario encontrado:', usuario);
-        
         const rolesAdmin = ['admin_rrhh', 'superadmin'];
         
         if (!rolesAdmin.includes(usuario.rol)) {
-          console.log('❌ verifyAdmin - Rol no válido:', usuario.rol, 'Roles permitidos:', rolesAdmin);
+          console.log('❌ verifyAdmin - Rol no válido:', usuario.rol);
           return res.status(403).json({ 
             error: 'Se requieren permisos de administración',
             requiredRole: 'admin_rrhh o superadmin'

@@ -47,10 +47,10 @@ const HistorialVacaciones = ({ usuarioId }) => {
     const cargarHistorial = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('token');
-  const response = await fetch(`${API_BASE_URL}/api/vacaciones/historial/${usuarioId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/vacaciones/historial/0`, {
+          credentials: 'include',  // Incluir cookies automáticamente
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
           }
         });
         

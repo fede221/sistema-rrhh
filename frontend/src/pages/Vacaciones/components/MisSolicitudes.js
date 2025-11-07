@@ -1,10 +1,7 @@
-import { API_BASE_URL } from '../../../config';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
-  Box,
   Card,
   CardContent,
-  Typography,
   Table,
   TableBody,
   TableCell,
@@ -13,157 +10,181 @@ import {
   TableRow,
   Paper,
   Chip,
-  Alert,
-  CircularProgress,
-  IconButton,
-  Tooltip
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  Box
 } from '@mui/material';
-import { Refresh } from '@mui/icons-material';
 
-const getEstadoColor = (estado) => {
-  switch (estado) {
-    case 'aprobado': return 'success';
-    case 'rechazado': return 'error';
-    case 'pendiente': return 'warning';
-    default: return 'default';
-  }
-};
+function MisSolicitudes({ solicitudes }) {
+  const [selectedSolicitud, setSelectedSolicitud] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
 
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
-  
-  // Verificar que sea una cadena antes de usarla
-  if (typeof dateString !== 'string') {
-    console.warn('formatDate recibió un valor no string:', dateString);
-    return 'N/A';
-  }
-  
-  return new Date(dateString).toLocaleDateString('es-ES');
-};
+  const getEstadoColor = (estado) => {
+    const estadoMap = {
+      'pendiente_referente': 'warning',
+      'pendiente_rh': 'info',
+      'aprobado': 'success',
+      'rechazado_referente': 'error',
+      'rechazado_rh': 'error'
+    };
+    return estadoMap[estado] || 'default';
+  };
 
-const MisSolicitudes = ({ usuarioId }) => {
-  const [solicitudes, setSolicitudes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const getEstadoLabel = (estado) => {
+    const labelMap = {
+      'pendiente_referente': '⏳ Pendiente Referente',
+      'pendiente_rh': '⏳ Pendiente RH',
+      'aprobado': '✓ Aprobado',
+      'rechazado_referente': '✗ Rechazado (Referente)',
+      'rechazado_rh': '✗ Rechazado (RH)'
+    };
+    return labelMap[estado] || estado;
+  };
 
-  const cargarSolicitudes = useCallback(async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-  const response = await fetch(`${API_BASE_URL}/api/vacaciones/mis-solicitudes/${usuarioId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) throw new Error('Error al cargar solicitudes');
-      
-      const data = await response.json();
-      setSolicitudes(data);
-    } catch (error) {
-      console.error('Error:', error);
-      setError('Error al cargar las solicitudes');
-    } finally {
-      setLoading(false);
-    }
-  }, [usuarioId]);
+  const handleViewDetails = (solicitud) => {
+    setSelectedSolicitud(solicitud);
+    setOpenDialog(true);
+  };
 
-  useEffect(() => {
-    cargarSolicitudes();
-  }, [cargarSolicitudes]);
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedSolicitud(null);
+  };
 
-  if (loading) {
+  if (solicitudes.length === 0) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert severity="error">
-        {error}
-      </Alert>
+      <Card>
+        <CardContent sx={{ textAlign: 'center', py: 4 }}>
+          <Typography color="textSecondary">
+            No tienes solicitudes de vacaciones aún.
+          </Typography>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6">
-            Mis Solicitudes de Vacaciones
-          </Typography>
-          <Tooltip title="Actualizar">
-            <IconButton onClick={cargarSolicitudes}>
-              <Refresh />
-            </IconButton>
-          </Tooltip>
-        </Box>
+    <>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead sx={{ background: '#f5f5f5' }}>
+            <TableRow>
+              <TableCell><strong>Período</strong></TableCell>
+              <TableCell align="center"><strong>Días</strong></TableCell>
+              <TableCell><strong>Estado</strong></TableCell>
+              <TableCell align="center"><strong>Acciones</strong></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {solicitudes.map((solicitud) => (
+              <TableRow key={solicitud.id} hover>
+                <TableCell>
+                  {new Date(solicitud.fecha_inicio).toLocaleDateString('es-AR')} - {' '}
+                  {new Date(solicitud.fecha_fin).toLocaleDateString('es-AR')}
+                </TableCell>
+                <TableCell align="center">
+                  <Chip label={`${solicitud.dias_solicitados} días`} size="small" />
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={getEstadoLabel(solicitud.estado)}
+                    color={getEstadoColor(solicitud.estado)}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell align="center">
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => handleViewDetails(solicitud)}
+                  >
+                    Ver detalles
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-        {solicitudes.length === 0 ? (
-          <Alert severity="info">
-            No has realizado ninguna solicitud de vacaciones aún.
-          </Alert>
-        ) : (
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Fecha Solicitud</TableCell>
-                  <TableCell>Período</TableCell>
-                  <TableCell align="center">Días</TableCell>
-                  <TableCell align="center">Estado</TableCell>
-                  <TableCell>Comentarios</TableCell>
-                  <TableCell>Fecha Respuesta</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {solicitudes.map((solicitud) => (
-                  <TableRow key={solicitud.id}>
-                    <TableCell>
-                      {formatDate(solicitud.fecha_solicitud)}
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        <strong>Desde:</strong> {formatDate(solicitud.fecha_inicio)}
-                        <br />
-                        <strong>Hasta:</strong> {formatDate(solicitud.fecha_fin)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Typography variant="h6" component="span">
-                        {solicitud.dias_solicitados}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip 
-                        label={solicitud.estado.charAt(0).toUpperCase() + solicitud.estado.slice(1)} 
-                        color={getEstadoColor(solicitud.estado)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ maxWidth: 200 }}>
-                        {solicitud.comentarios || '-'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {solicitud.fecha_respuesta 
-                        ? formatDate(solicitud.fecha_respuesta)
-                        : '-'
-                      }
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </CardContent>
-    </Card>
+      {/* DIALOG CON DETALLES */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>📋 Detalles de Solicitud</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          {selectedSolicitud && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box>
+                <Typography variant="body2" color="textSecondary">Período</Typography>
+                <Typography variant="body1">
+                  {new Date(selectedSolicitud.fecha_inicio).toLocaleDateString('es-AR')} a{' '}
+                  {new Date(selectedSolicitud.fecha_fin).toLocaleDateString('es-AR')}
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="body2" color="textSecondary">Días solicitados</Typography>
+                <Typography variant="body1">{selectedSolicitud.dias_solicitados}</Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="body2" color="textSecondary">Estado</Typography>
+                <Chip
+                  label={getEstadoLabel(selectedSolicitud.estado)}
+                  color={getEstadoColor(selectedSolicitud.estado)}
+                />
+              </Box>
+
+              {selectedSolicitud.comentarios_empleado && (
+                <Box>
+                  <Typography variant="body2" color="textSecondary">Tus comentarios</Typography>
+                  <Typography variant="body2">{selectedSolicitud.comentarios_empleado}</Typography>
+                </Box>
+              )}
+
+              {selectedSolicitud.referente_nombre && (
+                <Box sx={{ p: 1.5, background: '#f9f9f9', borderRadius: 1 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    ✓ Aprobado por: {selectedSolicitud.referente_nombre}
+                  </Typography>
+                  {selectedSolicitud.referente_comentario && (
+                    <Typography variant="body2">
+                      Comentario: {selectedSolicitud.referente_comentario}
+                    </Typography>
+                  )}
+                  <Typography variant="caption" color="textSecondary">
+                    Fecha: {new Date(selectedSolicitud.fecha_referente).toLocaleString('es-AR')}
+                  </Typography>
+                </Box>
+              )}
+
+              {selectedSolicitud.rh_nombre && (
+                <Box sx={{ p: 1.5, background: '#f9f9f9', borderRadius: 1 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    ✓ Aprobado por RH: {selectedSolicitud.rh_nombre}
+                  </Typography>
+                  {selectedSolicitud.rh_comentario && (
+                    <Typography variant="body2">
+                      Comentario: {selectedSolicitud.rh_comentario}
+                    </Typography>
+                  )}
+                  <Typography variant="caption" color="textSecondary">
+                    Fecha: {new Date(selectedSolicitud.fecha_rh).toLocaleString('es-AR')}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
-};
+}
 
 export default MisSolicitudes;

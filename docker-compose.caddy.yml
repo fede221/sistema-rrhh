@@ -21,7 +21,7 @@ services:
         condition: service_healthy
 
   backend:
-    image: elcheloide/sistema-rrhh-backend:latest
+    image: elcheloide/rrhh-backend:v1.2.2
     container_name: rrhh-backend
     restart: unless-stopped
     environment:
@@ -46,7 +46,7 @@ services:
       start_period: 60s
 
   frontend:
-    image: elcheloide/sistema-rrhh-frontend:latest
+    image: elcheloide/rrhh-frontend:v1.2.2
     container_name: rrhh-frontend
     restart: unless-stopped
     depends_on:

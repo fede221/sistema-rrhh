@@ -25,7 +25,7 @@ const BienvenidaEmpleado = () => {
     const fetchLegajo = async () => {
       try {
         const token = secureStorage.getItem('token');
-        const res = await fetch('/api/usuarios/mi-legajo', {
+        const res = await fetch('/api/legajos/mi-legajo', {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
@@ -102,8 +102,8 @@ const BienvenidaEmpleado = () => {
           })}
         </Typography>
       </Paper>
-
-      {/* Información del empleado */}
+      
+      {/* Información del empleado }
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Card sx={{ height: '100%' }}>
@@ -203,7 +203,7 @@ const BienvenidaEmpleado = () => {
           </Card>
         </Grid>
       </Grid>
-
+      {  hasta aca empleado*/}
       {/* Mensaje informativo */}
       <Paper sx={{ p: 3, mt: 4, bgcolor: 'grey.50' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>

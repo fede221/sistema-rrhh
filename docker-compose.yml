@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    image: elcheloide/sistema-rrhh-backend:prueba
+    image: elcheloide/rrhh-backend:v1.2.2
     container_name: rrhh-backend
     restart: unless-stopped
     environment:
@@ -27,7 +27,7 @@ services:
       start_period: 40s
 
   frontend:
-    image: elcheloide/sistema-rrhh-frontend:prueba
+    image: elcheloide/rrhh-frontend:v1.2.2
     container_name: rrhh-frontend
     restart: unless-stopped
     depends_on:

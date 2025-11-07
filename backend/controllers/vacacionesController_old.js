@@ -3,19 +3,15 @@ const { logError } = require('../utils/errorLogger');
 const { validarSolicitudVacaciones } = require('../utils/vacacionesUtils');
 
 /**
- * Controller refactorizado para módulo de vacaciones - Sistema RRHH
- * Implementa workflow: empleado → referente → RH → aprobado/rechazado
- * Basado en Ley 20.744 de Argentina
+ * Controller para módulo de vacaciones
+ * Ley 20.744 de Argentina - Contrato de Trabajo
  */
 const vacacionesController = {
-  
-  // ========== ENDPOINTS PARA EMPLEADOS ==========
-  
   /**
    * GET /api/vacaciones/dias-disponibles/:usuario_id
-   * Obtiene días disponibles para el año actual
+   * Obtiene los días disponibles del usuario para el año actual
    */
-  async getDiasDisponibles(req, res) {
+  getDiasDisponibles(req, res) {
     try {
       const usuario_id = req.user?.id || req.params.usuario_id;
       
@@ -28,7 +24,7 @@ const vacacionesController = {
           15 as dias_correspondientes,
           COALESCE(SUM(CASE WHEN vs.estado = 'aprobado' THEN vs.dias_solicitados ELSE 0 END), 0) as dias_tomados,
           COALESCE(SUM(CASE WHEN vs.estado IN ('pendiente_referente', 'pendiente_rh') THEN vs.dias_solicitados ELSE 0 END), 0) as dias_pendientes,
-          (15 - COALESCE(SUM(CASE WHEN vs.estado = 'aprobado' THEN vs.dias_solicitados ELSE 0 END), 0)) as dias_disponibles
+          15 - COALESCE(SUM(CASE WHEN vs.estado = 'aprobado' THEN vs.dias_solicitados ELSE 0 END), 0) as dias_disponibles
         FROM usuarios u
         LEFT JOIN vacaciones_solicitadas vs ON u.id = vs.usuario_id AND YEAR(vs.fecha_inicio) = YEAR(NOW())
         WHERE u.id = ?
@@ -41,16 +37,18 @@ const vacacionesController = {
           return res.status(500).json({ error: 'Error al obtener días disponibles' });
         }
         
-        const result = results?.[0] || {
-          usuario_id: parseInt(usuario_id),
-          anio: new Date().getFullYear(),
-          dias_correspondientes: 15,
-          dias_tomados: 0,
-          dias_pendientes: 0,
-          dias_disponibles: 15
-        };
+        if (!results || results.length === 0) {
+          return res.json([{
+            usuario_id: parseInt(usuario_id),
+            anio: new Date().getFullYear(),
+            dias_correspondientes: 15,
+            dias_tomados: 0,
+            dias_pendientes: 0,
+            dias_disponibles: 15
+          }]);
+        }
         
-        res.json(result);
+        res.json(results[0]);
       });
     } catch (error) {
       console.error('💥 Error en getDiasDisponibles:', error);
@@ -62,22 +60,23 @@ const vacacionesController = {
    * POST /api/vacaciones/crear-solicitud
    * Crea una nueva solicitud de vacaciones
    */
-  async crearSolicitud(req, res) {
+  crearSolicitud(req, res) {
     try {
       const usuario_id = req.user?.id;
-      const { fecha_inicio, fecha_fin, comentarios = '' } = req.body;
+      const { fecha_inicio, fecha_fin, comentarios } = req.body;
+
+      console.log('🔍 crearSolicitud:', { usuario_id, fecha_inicio, fecha_fin });
 
       if (!usuario_id) {
         return res.status(401).json({ error: 'Usuario no autenticado' });
       }
 
       if (!fecha_inicio || !fecha_fin) {
-        return res.status(400).json({ error: 'Fechas de inicio y fin son requeridas' });
+        return res.status(400).json({ error: 'Fechas requeridas' });
       }
 
-      // Validar fechas según Ley 20.744
+      // Validar según Ley 20.744
       const validacion = validarSolicitudVacaciones(fecha_inicio, fecha_fin, false);
-      
       if (!validacion.valido) {
         return res.status(400).json({
           error: 'Solicitud inválida',
@@ -86,54 +85,53 @@ const vacacionesController = {
         });
       }
 
+      const dias_solicitados = validacion.diasSolicitados;
+
       // Verificar solapamientos
       const checkQuery = `
         SELECT COUNT(*) as count 
         FROM vacaciones_solicitadas
         WHERE usuario_id = ? 
-          AND DATE(fecha_inicio) <= DATE(?)
-          AND DATE(fecha_fin) >= DATE(?) 
-          AND estado NOT IN ('rechazado_referente', 'rechazado_rh')
+        AND DATE(fecha_inicio) <= ? 
+        AND DATE(fecha_fin) >= ?
+        AND estado NOT IN ('rechazado_referente', 'rechazado_rh')
       `;
 
-      db.query(checkQuery, [usuario_id, fecha_fin, fecha_inicio], (checkErr, checkResults) => {
-        if (checkErr) {
-          console.error('❌ Error verificando solapamientos:', checkErr);
-          return res.status(500).json({ error: 'Error al verificar solicitudes existentes' });
+      db.query(checkQuery, [usuario_id, fecha_fin, fecha_inicio], (err, results) => {
+        if (err) {
+          console.error('❌ Error en checkQuery:', err);
+          return res.status(500).json({ error: 'Error al verificar solicitudes' });
         }
 
-        if (checkResults[0].count > 0) {
-          return res.status(400).json({ error: 'Ya existe una solicitud en ese período' });
+        if (results[0].count > 0) {
+          return res.status(400).json({ error: 'Ya existe solicitud en ese período' });
         }
 
-        // Insertar nueva solicitud
+        // Insertar solicitud
         const insertQuery = `
           INSERT INTO vacaciones_solicitadas 
-          (usuario_id, fecha_inicio, fecha_fin, dias_solicitados, estado, comentarios_empleado, anio)
-          VALUES (?, ?, ?, ?, 'pendiente_referente', ?, YEAR(?))
+          (usuario_id, fecha_inicio, fecha_fin, dias_solicitados, estado, comentarios_empleado, anio, created_at)
+          VALUES (?, ?, ?, ?, 'pendiente_referente', ?, YEAR(?), NOW())
         `;
 
-        const params = [
+        db.query(insertQuery, [
           usuario_id,
           fecha_inicio,
           fecha_fin,
-          validacion.diasSolicitados,
-          comentarios,
+          dias_solicitados,
+          comentarios || '',
           fecha_inicio
-        ];
-
-        db.query(insertQuery, params, (insertErr, result) => {
+        ], (insertErr, result) => {
           if (insertErr) {
-            console.error('❌ Error creando solicitud:', insertErr);
+            console.error('❌ Error en INSERT:', insertErr);
             return res.status(500).json({ error: 'Error al crear solicitud' });
           }
 
+          console.log('✅ Solicitud creada:', result.insertId);
           res.status(201).json({
             message: 'Solicitud creada exitosamente',
             solicitud_id: result.insertId,
-            estado: 'pendiente_referente',
-            dias_solicitados: validacion.diasSolicitados,
-            advertencias: validacion.advertencias
+            estado: 'pendiente_referente'
           });
         });
       });
@@ -144,35 +142,34 @@ const vacacionesController = {
   },
 
   /**
-   * GET /api/vacaciones/mis-solicitudes/:usuario_id
+   * GET /api/vacaciones/mis-solicitudes
    * Obtiene las solicitudes del usuario autenticado
    */
-  async misSolicitudes(req, res) {
+  misSolicitudes(req, res) {
     try {
-      const usuario_id = req.user?.id || req.params.usuario_id;
+      const usuario_id = req.user?.id;
+
+      if (!usuario_id) {
+        return res.status(401).json({ error: 'Usuario no autenticado' });
+      }
 
       const query = `
         SELECT 
-          vs.id,
-          vs.fecha_inicio,
-          vs.fecha_fin,
-          vs.dias_solicitados,
-          vs.estado,
-          vs.comentarios_empleado,
-          vs.referente_comentario,
-          vs.rh_comentario,
-          vs.fecha_solicitud,
-          vs.fecha_referente,
-          vs.fecha_rh,
-          u_ref.nombre as referente_nombre,
-          u_ref.apellido as referente_apellido,
-          u_rh.nombre as rh_nombre,
-          u_rh.apellido as rh_apellido
-        FROM vacaciones_solicitadas vs
-        LEFT JOIN usuarios u_ref ON vs.referente_id = u_ref.id
-        LEFT JOIN usuarios u_rh ON vs.rh_id = u_rh.id
-        WHERE vs.usuario_id = ?
-        ORDER BY vs.fecha_solicitud DESC
+          id,
+          usuario_id,
+          fecha_inicio,
+          fecha_fin,
+          dias_solicitados,
+          estado,
+          comentarios_empleado,
+          referente_id,
+          rh_id,
+          anio,
+          created_at
+        FROM vacaciones_solicitadas
+        WHERE usuario_id = ?
+        ORDER BY fecha_inicio DESC
+        LIMIT 50
       `;
 
       db.query(query, [usuario_id], (err, results) => {
@@ -190,10 +187,10 @@ const vacacionesController = {
   },
 
   /**
-   * GET /api/vacaciones/historial/:usuario_id
-   * Obtiene historial agrupado por año
+   * GET /api/vacaciones/historial-completo/:usuario_id
+   * Obtiene el historial completo de vacaciones
    */
-  async historialCompleto(req, res) {
+  historialCompleto(req, res) {
     try {
       const usuario_id = req.user?.id || req.params.usuario_id;
 
@@ -202,7 +199,7 @@ const vacacionesController = {
           YEAR(fecha_inicio) as anio,
           15 as dias_correspondientes,
           COALESCE(SUM(CASE WHEN estado = 'aprobado' THEN dias_solicitados ELSE 0 END), 0) as dias_tomados,
-          (15 - COALESCE(SUM(CASE WHEN estado = 'aprobado' THEN dias_solicitados ELSE 0 END), 0)) as dias_disponibles,
+          15 - COALESCE(SUM(CASE WHEN estado = 'aprobado' THEN dias_solicitados ELSE 0 END), 0) as dias_disponibles,
           COUNT(*) as total_solicitudes
         FROM vacaciones_solicitadas
         WHERE usuario_id = ?
@@ -216,18 +213,7 @@ const vacacionesController = {
           return res.status(500).json({ error: 'Error al obtener historial' });
         }
 
-        // Si no hay datos, devolver año actual
-        if (!results || results.length === 0) {
-          results = [{
-            anio: new Date().getFullYear(),
-            dias_correspondientes: 15,
-            dias_tomados: 0,
-            dias_disponibles: 15,
-            total_solicitudes: 0
-          }];
-        }
-
-        res.json(results);
+        res.json(results || []);
       });
     } catch (error) {
       console.error('💥 Error en historialCompleto:', error);
@@ -235,33 +221,40 @@ const vacacionesController = {
     }
   },
 
-  // ========== ENDPOINTS PARA REFERENTES ==========
-
   /**
-   * GET /api/vacaciones/pendientes-referente  
-   * Obtiene solicitudes pendientes de aprobación por referente
+   * GET /api/vacaciones/pendientes-referente
+   * Obtiene solicitudes pendientes de aprobación del referente
    */
-  async solicitudesPendientesReferente(req, res) {
+  solicitudesPendientesReferente(req, res) {
     try {
+      const referente_id = req.user?.id;
+
+      if (!referente_id) {
+        return res.status(401).json({ error: 'Usuario no autenticado' });
+      }
+
+      // TODO: Aquí necesitamos una tabla de relación referente-usuarios
+      // Por ahora retornar array vacío
       const query = `
         SELECT 
           vs.id,
           vs.usuario_id,
+          u.nombre,
+          u.apellido,
           vs.fecha_inicio,
           vs.fecha_fin,
           vs.dias_solicitados,
+          vs.estado,
           vs.comentarios_empleado,
-          vs.fecha_solicitud,
-          u.nombre,
-          u.apellido,
-          u.dni
+          vs.created_at
         FROM vacaciones_solicitadas vs
-        INNER JOIN usuarios u ON vs.usuario_id = u.id
+        JOIN usuarios u ON vs.usuario_id = u.id
         WHERE vs.estado = 'pendiente_referente'
-        ORDER BY vs.fecha_solicitud ASC
+        AND vs.referente_id = ?
+        ORDER BY vs.created_at DESC
       `;
 
-      db.query(query, (err, results) => {
+      db.query(query, [referente_id], (err, results) => {
         if (err) {
           console.error('❌ Error solicitudesPendientesReferente:', err);
           return res.status(500).json({ error: 'Error al obtener solicitudes' });
@@ -276,14 +269,13 @@ const vacacionesController = {
   },
 
   /**
-   * PUT /api/vacaciones/responder-referente/:id
-   * Referente aprueba o rechaza solicitud
+   * POST /api/vacaciones/responder-referente
+   * El referente aprueba o rechaza una solicitud
    */
-  async responderReferente(req, res) {
+  responderReferente(req, res) {
     try {
       const referente_id = req.user?.id;
-      const solicitud_id = req.params.id;
-      const { aprobada, comentarios = '' } = req.body;
+      const { solicitud_id, aprobada, comentarios } = req.body;
 
       if (!solicitud_id || aprobada === undefined) {
         return res.status(400).json({ error: 'Datos incompletos' });
@@ -298,21 +290,17 @@ const vacacionesController = {
           referente_id = ?,
           referente_comentario = ?,
           fecha_referente = NOW()
-        WHERE id = ? AND estado = 'pendiente_referente'
+        WHERE id = ?
       `;
 
-      db.query(updateQuery, [nuevoEstado, referente_id, comentarios, solicitud_id], (err, result) => {
+      db.query(updateQuery, [nuevoEstado, referente_id, comentarios || '', solicitud_id], (err) => {
         if (err) {
           console.error('❌ Error responderReferente:', err);
           return res.status(500).json({ error: 'Error al procesar respuesta' });
         }
 
-        if (result.affectedRows === 0) {
-          return res.status(404).json({ error: 'Solicitud no encontrada o ya procesada' });
-        }
-
         res.json({ 
-          message: 'Solicitud procesada exitosamente',
+          message: 'Solicitud procesada',
           estado: nuevoEstado 
         });
       });
@@ -322,35 +310,30 @@ const vacacionesController = {
     }
   },
 
-  // ========== ENDPOINTS PARA RH ==========
-
   /**
    * GET /api/vacaciones/pendientes-rh
-   * Obtiene solicitudes pendientes de aprobación por RH
+   * Obtiene solicitudes pendientes de aprobación de RH
    */
-  async solicitudesPendientesRH(req, res) {
+  solicitudesPendientesRH(req, res) {
     try {
       const query = `
         SELECT 
           vs.id,
           vs.usuario_id,
+          u.nombre,
+          u.apellido,
           vs.fecha_inicio,
           vs.fecha_fin,
           vs.dias_solicitados,
+          vs.estado,
           vs.comentarios_empleado,
+          vs.referente_id,
           vs.referente_comentario,
-          vs.fecha_solicitud,
-          vs.fecha_referente,
-          u.nombre,
-          u.apellido,
-          u.dni,
-          u_ref.nombre as referente_nombre,
-          u_ref.apellido as referente_apellido
+          vs.created_at
         FROM vacaciones_solicitadas vs
-        INNER JOIN usuarios u ON vs.usuario_id = u.id
-        LEFT JOIN usuarios u_ref ON vs.referente_id = u_ref.id
+        JOIN usuarios u ON vs.usuario_id = u.id
         WHERE vs.estado = 'pendiente_rh'
-        ORDER BY vs.fecha_referente ASC
+        ORDER BY vs.created_at DESC
       `;
 
       db.query(query, (err, results) => {
@@ -368,14 +351,13 @@ const vacacionesController = {
   },
 
   /**
-   * PUT /api/vacaciones/responder-rh/:id
-   * RH aprueba o rechaza solicitud (decisión final)
+   * POST /api/vacaciones/responder-rh
+   * RH aprueba o rechaza una solicitud
    */
-  async responderRH(req, res) {
+  responderRH(req, res) {
     try {
       const rh_id = req.user?.id;
-      const solicitud_id = req.params.id;
-      const { aprobada, comentarios = '' } = req.body;
+      const { solicitud_id, aprobada, comentarios } = req.body;
 
       if (!solicitud_id || aprobada === undefined) {
         return res.status(400).json({ error: 'Datos incompletos' });
@@ -390,69 +372,22 @@ const vacacionesController = {
           rh_id = ?,
           rh_comentario = ?,
           fecha_rh = NOW()
-        WHERE id = ? AND estado = 'pendiente_rh'
+        WHERE id = ?
       `;
 
-      db.query(updateQuery, [nuevoEstado, rh_id, comentarios, solicitud_id], (err, result) => {
+      db.query(updateQuery, [nuevoEstado, rh_id, comentarios || '', solicitud_id], (err) => {
         if (err) {
           console.error('❌ Error responderRH:', err);
           return res.status(500).json({ error: 'Error al procesar respuesta' });
         }
 
-        if (result.affectedRows === 0) {
-          return res.status(404).json({ error: 'Solicitud no encontrada o ya procesada' });
-        }
-
         res.json({ 
-          message: 'Solicitud procesada exitosamente',
+          message: 'Solicitud procesada',
           estado: nuevoEstado 
         });
       });
     } catch (error) {
       console.error('💥 Error en responderRH:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
-    }
-  },
-
-  // ========== ENDPOINTS AUXILIARES ==========
-
-  /**
-   * GET /api/vacaciones/resumen/:usuario_id  
-   * Resumen rápido para dashboard
-   */
-  async getResumen(req, res) {
-    try {
-      const usuario_id = req.user?.id || req.params.usuario_id;
-
-      const query = `
-        SELECT 
-          15 as dias_correspondientes,
-          COALESCE(SUM(CASE WHEN estado = 'aprobado' THEN dias_solicitados ELSE 0 END), 0) as dias_tomados,
-          COALESCE(SUM(CASE WHEN estado IN ('pendiente_referente', 'pendiente_rh') THEN dias_solicitados ELSE 0 END), 0) as dias_pendientes,
-          COUNT(CASE WHEN estado IN ('pendiente_referente', 'pendiente_rh') THEN 1 END) as solicitudes_pendientes
-        FROM vacaciones_solicitadas
-        WHERE usuario_id = ? AND YEAR(fecha_inicio) = YEAR(NOW())
-      `;
-
-      db.query(query, [usuario_id], (err, results) => {
-        if (err) {
-          console.error('❌ Error getResumen:', err);
-          return res.status(500).json({ error: 'Error al obtener resumen' });
-        }
-
-        const result = results?.[0] || {
-          dias_correspondientes: 15,
-          dias_tomados: 0,
-          dias_pendientes: 0,
-          solicitudes_pendientes: 0
-        };
-
-        result.dias_disponibles = result.dias_correspondientes - result.dias_tomados - result.dias_pendientes;
-
-        res.json(result);
-      });
-    } catch (error) {
-      console.error('💥 Error en getResumen:', error);
       res.status(500).json({ error: 'Error interno del servidor' });
     }
   }

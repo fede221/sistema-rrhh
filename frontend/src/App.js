@@ -8,6 +8,9 @@ import Navbar from './components/Navbar';
 import SessionManager from './components/SessionManager';
 import Usuarios from './pages/Usuarios/Usuarios';
 import Vacaciones from './pages/Vacaciones/Vacaciones';
+import PanelEmpleado from './pages/Vacaciones/PanelEmpleado';
+import PanelReferente from './pages/Vacaciones/PanelReferente';
+import PanelRH from './pages/Vacaciones/PanelRH';
 import Recibos from './pages/Recibos/Recibos';
 import GestionEmpresas from './pages/Recibos/GestionEmpresas';
 import Legajo from './pages/Legajo/Legajo'; 
@@ -72,6 +75,15 @@ const AppLayout = () => {
           />
           <Route path="/usuarios" element={token ? <Usuarios /> : <Navigate to="/login" />} />
           <Route path="/vacaciones" element={token ? <Vacaciones /> : <Navigate to="/login" />} />
+          <Route path="/vacaciones/empleado" element={
+            token && user?.rol === 'empleado' ? <PanelEmpleado /> : <Navigate to="/login" />
+          } />
+          <Route path="/vacaciones/referente" element={
+            token && user?.rol && ['referente_vacaciones', 'superadmin'].includes(user.rol) ? <PanelReferente /> : <Navigate to="/login" />
+          } />
+          <Route path="/vacaciones/rh" element={
+            token && user?.rol && ['admin_rrhh', 'superadmin'].includes(user.rol) ? <PanelRH /> : <Navigate to="/login" />
+          } />
           <Route path="/recibos" element={token ? <Recibos /> : <Navigate to="/login" />} />
           <Route 
             path="/empresas" 

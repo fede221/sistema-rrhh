@@ -1198,7 +1198,7 @@ const Recibos = () => {
             </tr>
             <tr style="border-top: 1px solid var(--ink);">
               <td class="center" style="border-right: 1px solid var(--ink);">${formatearFechaBD(registros[0]?.FecIngreso)}</td>
-              <td class="center" style="border-right: 1px solid var(--ink);">${formatearFechaBD(registros[0]?.FecBAntiguedad || registros[0]?.FecIngreso)}</td>
+              <td class="center" style="border-right: 1px solid var(--ink);">${formatearFechaBD(registros[0]?.FecBaseAnt)}</td>
               <td class="center" style="border-right: 1px solid var(--ink);">${registros[0]?.FecEgreso || '-'}</td>
               <td class="center" style="border-right: 1px solid var(--ink);">${registros[0]?.CentroADesc || registros[0]?.CentroA || ''}</td>
               <td class="center">${registros[0]?.AtributoEsp1 || registros[0]?.ConcObs || 'ADMINISTRATIVO'}</td>
@@ -2923,7 +2923,7 @@ const Recibos = () => {
               <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                 <Box>
                   <Typography variant="body2">Fecha Ingreso: {formatearFechaBD(detalle.registros[0].FecIngreso)}</Typography>
-                  <Typography variant="body2">Fecha B.Antiguedad: {formatearFechaBD(detalle.registros[0].FecBAntiguedad)}</Typography>
+                  <Typography variant="body2">Fecha B.Antiguedad: {formatearFechaBD(detalle.registros[0].FecBaseAnt)}</Typography>
                   <Typography variant="body2">Fecha Egreso: {detalle.registros[0].FecEgreso}</Typography>
                 </Box>
                 <Box>

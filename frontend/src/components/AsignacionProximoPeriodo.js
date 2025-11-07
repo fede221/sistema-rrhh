@@ -16,12 +16,11 @@ import {
   ListItem,
   ListItemText,
   Chip,
-  Divider
 } from '@mui/material';
 import { Assignment, Warning, CheckCircle, Error } from '@mui/icons-material';
 
 const AsignacionProximoPeriodo = () => {
-  const [anioDestino, setAnioDestino] = useState(new Date().getFullYear() + 1);
+  const [anioDestino, setAnioDestino] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState(null);
   const [error, setError] = useState('');
@@ -60,8 +59,8 @@ const AsignacionProximoPeriodo = () => {
   };
 
   const handleConfirmar = () => {
-    if (!anioDestino || anioDestino <= new Date().getFullYear()) {
-      setError('Debe especificar un año futuro válido');
+    if (!anioDestino || anioDestino < new Date().getFullYear()) {
+      setError('Debe especificar el año actual o posterior');
       return;
     }
     setConfirmDialog(true);
@@ -98,8 +97,9 @@ const AsignacionProximoPeriodo = () => {
           value={anioDestino}
           onChange={(e) => setAnioDestino(parseInt(e.target.value))}
           fullWidth
-          helperText={`Año actual: ${new Date().getFullYear()}`}
-          inputProps={{ min: new Date().getFullYear() + 1 }}
+          helperText={`Año actual: ${new Date().getFullYear()} (se usará automáticamente)`}
+          inputProps={{ min: new Date().getFullYear() }}
+          disabled
         />
       </Box>
 
