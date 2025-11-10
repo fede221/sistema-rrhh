@@ -4,8 +4,8 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 const Version = () => {
   // Leer versión desde el archivo version.json
-  const version = process.env.REACT_APP_VERSION || '1.2.1';
-  const buildDate = process.env.REACT_APP_BUILD_DATE || '2025-10-23';
+  const version = process.env.REACT_APP_VERSION || '1.2.2';
+  const buildDate = process.env.REACT_APP_BUILD_DATE || '2025-11-07';
   const environment = process.env.REACT_APP_ENV || 'production';
 
   // Determinar color según el ambiente

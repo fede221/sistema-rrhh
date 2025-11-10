@@ -48,6 +48,22 @@ const sanitizeText = (text) => {
   return str;
 };
 
+// Función para sanitizar campos numéricos (DNI, CUIL, Legajo, etc.)
+const sanitizeNumericField = (value) => {
+  if (value === null || value === undefined) return null;
+  
+  // Convertir a string
+  let str = String(value);
+  
+  // Remover espacios, tabs y caracteres de control
+  str = str.replace(/[\s\t\r\n\x00-\x1F\x7F-\x9F]/g, '');
+  
+  // Si queda vacío después de limpiar, devolver null
+  if (str === '') return null;
+  
+  return str;
+};
+
 exports.firmarRecibo = async (req, res) => {
   const user = req.user;
   const { periodo, password, legajo } = req.body;
@@ -701,6 +717,12 @@ exports.importarRecibos = async (req, res) => {
         'provincia', 'ConvenioCodigo', 'ConvenioDenominacion', 'CategoriaCodigo', 'CategoriaNombre'
       ];
       
+      // Definir campos numéricos que necesitan sanitización especial
+      const numericFields = [
+        'CUIL', 'Legajo', 'DocNumero', 'ConcNro', 'IdLiquidacion', 'IdLegajo', 'IdPersona', 
+        'IdCategoria', 'IdConvenio', 'NroCopia', 'NumeroRecibo'
+      ];
+      
       const values = columns.map(col => {
         if (col === 'PeriodoLiquidacion') return periodoLiquidacion;
         if (col === 'FechaPago') return fechaPago;
@@ -709,6 +731,11 @@ exports.importarRecibos = async (req, res) => {
         if (dateFields.includes(col)) {
           if (row[col] && !isNaN(row[col])) return excelDateToString(row[col]);
           return row[col] ?? null;
+        }
+        
+        // Aplicar sanitización a campos numéricos
+        if (numericFields.includes(col)) {
+          return sanitizeNumericField(row[col]);
         }
         
         // Aplicar sanitización a campos de texto
