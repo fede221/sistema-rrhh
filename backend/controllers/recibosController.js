@@ -602,10 +602,22 @@ exports.importarRecibos = async (req, res) => {
 
     function excelDateToString(excelDate) {
       if (!excelDate || isNaN(excelDate)) return null;
-      const date = new Date(Math.round((excelDate - 25569) * 86400 * 1000));
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const dd = String(date.getDate()).padStart(2, '0');
+      
+      // Excel fecha serial: días desde 1900-01-01 (pero Excel piensa que 1900 es bisiesto)
+      // Ajuste para el bug de Excel: restar 1 si es después del 29/02/1900
+      let adjustedDate = excelDate;
+      if (excelDate > 60) {
+        adjustedDate = excelDate - 1; // Corrección por el bug del año bisiesto de 1900
+      }
+      
+      // Convertir a milisegundos desde epoch Unix
+      // 25569 es el número serial de Excel para 1970-01-01
+      const date = new Date((adjustedDate - 25569) * 86400 * 1000);
+      
+      // Usar métodos UTC para evitar problemas con zona horaria
+      const yyyy = date.getUTCFullYear();
+      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(date.getUTCDate()).padStart(2, '0');
       return `${yyyy}-${mm}-${dd}`;
     }
 
