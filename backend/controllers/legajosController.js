@@ -1391,3 +1391,293 @@ exports.eliminarLegajo = async (req, res) => {
     res.status(500).json({ error: 'Error al eliminar legajo' });
   }
 };
+
+// ========== GESTIÓN DE ARCHIVOS ADJUNTOS ==========
+
+/**
+ * Subir archivo adjunto a un legajo
+ * POST /api/legajos/:legajo_id/archivos
+ */
+exports.subirArchivo = async (req, res) => {
+  try {
+    const { legajo_id } = req.params;
+    const { tipo_documento, descripcion = '' } = req.body;
+    const usuario_id = req.user.id;
+    
+    // Verificar que se subió un archivo
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se proporcionó ningún archivo' });
+    }
+
+    // Verificar que el legajo existe y el usuario tiene permiso
+    const checkQuery = `
+      SELECT l.id, l.usuario_id 
+      FROM legajos l 
+      WHERE l.id = ?
+    `;
+    
+    db.query(checkQuery, [legajo_id], (err, results) => {
+      if (err) {
+        console.error('Error verificando legajo:', err);
+        return res.status(500).json({ error: 'Error al verificar legajo' });
+      }
+      
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'Legajo no encontrado' });
+      }
+      
+      const legajo = results[0];
+      const rol = req.user.rol;
+      
+      // Verificar permisos: debe ser el dueño del legajo o admin/superadmin
+      if (legajo.usuario_id !== usuario_id && rol !== 'admin_rrhh' && rol !== 'superadmin') {
+        return res.status(403).json({ error: 'No tiene permiso para subir archivos a este legajo' });
+      }
+      
+      // Guardar información del archivo en la base de datos
+      const insertQuery = `
+        INSERT INTO legajo_archivos 
+        (legajo_id, tipo_documento, nombre_archivo, ruta_archivo, tamaño_kb, mime_type, descripcion, subido_por)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      
+      const tamañoKB = Math.round(req.file.size / 1024);
+      const valores = [
+        legajo_id,
+        tipo_documento,
+        req.file.originalname,
+        req.file.path,
+        tamañoKB,
+        req.file.mimetype,
+        descripcion,
+        usuario_id
+      ];
+      
+      db.query(insertQuery, valores, (insertErr, insertResult) => {
+        if (insertErr) {
+          console.error('Error guardando archivo en BD:', insertErr);
+          // Intentar eliminar el archivo físico si falla la BD
+          const fs = require('fs');
+          if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+          }
+          return res.status(500).json({ error: 'Error al guardar información del archivo' });
+        }
+        
+        res.status(201).json({
+          message: 'Archivo subido exitosamente',
+          archivo: {
+            id: insertResult.insertId,
+            legajo_id: legajo_id,
+            tipo_documento: tipo_documento,
+            nombre_archivo: req.file.originalname,
+            tamaño_kb: tamañoKB,
+            mime_type: req.file.mimetype,
+            descripcion: descripcion,
+            fecha_subida: new Date()
+          }
+        });
+      });
+    });
+    
+  } catch (error) {
+    console.error('Error en subirArchivo:', error);
+    res.status(500).json({ error: 'Error al subir archivo' });
+  }
+};
+
+/**
+ * Obtener lista de archivos de un legajo
+ * GET /api/legajos/:legajo_id/archivos
+ */
+exports.obtenerArchivos = async (req, res) => {
+  try {
+    const { legajo_id } = req.params;
+    const usuario_id = req.user.id;
+    const rol = req.user.rol;
+    
+    // Verificar permisos
+    const checkQuery = `
+      SELECT l.id, l.usuario_id 
+      FROM legajos l 
+      WHERE l.id = ?
+    `;
+    
+    db.query(checkQuery, [legajo_id], (err, results) => {
+      if (err) {
+        console.error('Error verificando legajo:', err);
+        return res.status(500).json({ error: 'Error al verificar legajo' });
+      }
+      
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'Legajo no encontrado' });
+      }
+      
+      const legajo = results[0];
+      
+      // Verificar permisos
+      if (legajo.usuario_id !== usuario_id && rol !== 'admin_rrhh' && rol !== 'superadmin') {
+        return res.status(403).json({ error: 'No tiene permiso para ver archivos de este legajo' });
+      }
+      
+      // Obtener archivos
+      const query = `
+        SELECT 
+          la.id,
+          la.tipo_documento,
+          la.nombre_archivo,
+          la.tamaño_kb,
+          la.mime_type,
+          la.descripcion,
+          la.fecha_subida,
+          u.nombre as subido_por_nombre,
+          u.apellido as subido_por_apellido
+        FROM legajo_archivos la
+        LEFT JOIN usuarios u ON la.subido_por = u.id
+        WHERE la.legajo_id = ? AND la.activo = TRUE
+        ORDER BY la.tipo_documento, la.fecha_subida DESC
+      `;
+      
+      db.query(query, [legajo_id], (queryErr, archivos) => {
+        if (queryErr) {
+          console.error('Error obteniendo archivos:', queryErr);
+          return res.status(500).json({ error: 'Error al obtener archivos' });
+        }
+        
+        res.json(archivos || []);
+      });
+    });
+    
+  } catch (error) {
+    console.error('Error en obtenerArchivos:', error);
+    res.status(500).json({ error: 'Error al obtener archivos' });
+  }
+};
+
+/**
+ * Descargar archivo específico
+ * GET /api/legajos/:legajo_id/archivos/:archivo_id/descargar
+ */
+exports.descargarArchivo = async (req, res) => {
+  try {
+    const { legajo_id, archivo_id } = req.params;
+    const usuario_id = req.user.id;
+    const rol = req.user.rol;
+    
+    // Verificar permisos y obtener información del archivo
+    const query = `
+      SELECT 
+        la.ruta_archivo,
+        la.nombre_archivo,
+        la.mime_type,
+        l.usuario_id
+      FROM legajo_archivos la
+      INNER JOIN legajos l ON la.legajo_id = l.id
+      WHERE la.id = ? AND la.legajo_id = ? AND la.activo = TRUE
+    `;
+    
+    db.query(query, [archivo_id, legajo_id], (err, results) => {
+      if (err) {
+        console.error('Error obteniendo archivo:', err);
+        return res.status(500).json({ error: 'Error al obtener archivo' });
+      }
+      
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'Archivo no encontrado' });
+      }
+      
+      const archivo = results[0];
+      
+      // Verificar permisos
+      if (archivo.usuario_id !== usuario_id && rol !== 'admin_rrhh' && rol !== 'superadmin') {
+        return res.status(403).json({ error: 'No tiene permiso para descargar este archivo' });
+      }
+      
+      // Verificar que el archivo existe físicamente
+      const fs = require('fs');
+      if (!fs.existsSync(archivo.ruta_archivo)) {
+        return res.status(404).json({ error: 'Archivo físico no encontrado' });
+      }
+      
+      // Enviar archivo
+      res.download(archivo.ruta_archivo, archivo.nombre_archivo, (downloadErr) => {
+        if (downloadErr) {
+          console.error('Error descargando archivo:', downloadErr);
+          if (!res.headersSent) {
+            res.status(500).json({ error: 'Error al descargar archivo' });
+          }
+        }
+      });
+    });
+    
+  } catch (error) {
+    console.error('Error en descargarArchivo:', error);
+    res.status(500).json({ error: 'Error al descargar archivo' });
+  }
+};
+
+/**
+ * Eliminar archivo adjunto
+ * DELETE /api/legajos/:legajo_id/archivos/:archivo_id
+ */
+exports.eliminarArchivo = async (req, res) => {
+  try {
+    const { legajo_id, archivo_id } = req.params;
+    const usuario_id = req.user.id;
+    const rol = req.user.rol;
+    
+    // Verificar permisos y obtener ruta del archivo
+    const query = `
+      SELECT 
+        la.ruta_archivo,
+        l.usuario_id
+      FROM legajo_archivos la
+      INNER JOIN legajos l ON la.legajo_id = l.id
+      WHERE la.id = ? AND la.legajo_id = ? AND la.activo = TRUE
+    `;
+    
+    db.query(query, [archivo_id, legajo_id], (err, results) => {
+      if (err) {
+        console.error('Error verificando archivo:', err);
+        return res.status(500).json({ error: 'Error al verificar archivo' });
+      }
+      
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'Archivo no encontrado' });
+      }
+      
+      const archivo = results[0];
+      
+      // Verificar permisos: solo admin/superadmin pueden eliminar
+      if (rol !== 'admin_rrhh' && rol !== 'superadmin') {
+        return res.status(403).json({ error: 'No tiene permiso para eliminar archivos' });
+      }
+      
+      // Marcar como inactivo (borrado lógico)
+      const deleteQuery = `
+        UPDATE legajo_archivos 
+        SET activo = FALSE 
+        WHERE id = ?
+      `;
+      
+      db.query(deleteQuery, [archivo_id], (deleteErr) => {
+        if (deleteErr) {
+          console.error('Error eliminando archivo:', deleteErr);
+          return res.status(500).json({ error: 'Error al eliminar archivo' });
+        }
+        
+        // Opcionalmente, eliminar archivo físico
+        // const fs = require('fs');
+        // if (fs.existsSync(archivo.ruta_archivo)) {
+        //   fs.unlinkSync(archivo.ruta_archivo);
+        // }
+        
+        res.json({ message: 'Archivo eliminado exitosamente' });
+      });
+    });
+    
+  } catch (error) {
+    console.error('Error en eliminarArchivo:', error);
+    res.status(500).json({ error: 'Error al eliminar archivo' });
+  }
+};

@@ -1,7 +1,7 @@
 {
   "version": "1.2.2",
-  "buildDate": "2025-11-07",
-  "buildNumber": "4",
-  "releaseNotes": "Refactor completo del módulo de vacaciones: controlador completamente reescrito con 8 endpoints optimizados, validaciones mejoradas, sincronización frontend-backend, corrección de parámetros de aprobación, migración exitosa de desarrollo a producción, estructuras de base de datos verificadas, y corrección de problema de DNIs con espacios/tabs en recibos.",
+  "buildDate": "2025-11-17",
+  "buildNumber": "5",
+  "releaseNotes": "Corrección de problema de fechas con zona horaria: FecBaseAnt y FecIngreso se restaban un día al importar recibos. Se corrigió la función de conversión de fechas de Excel para usar UTC y evitar problemas de timezone en Argentina (UTC-3).",
   "environment": "development"
 }
