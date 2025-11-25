@@ -37,68 +37,10 @@ if (process.env.CORS_ORIGIN) {
 }
 
 const corsOptions = {
-  origin: function(origin, callback) {
-    // Normalizar orígenes: quitar barra final, espacios, minúsculas
-    const normalize = o => (o ? o.trim().replace(/\/$/, '').toLowerCase() : o);
-    const normalizedOrigin = normalize(origin);
-    log.http('CORS request from origin', { origin, normalized: normalizedOrigin });
-    log.debug('Allowed origins check', { allowedOrigins });
-
-    // Cuando el cliente no envía origin (ej. llamadas desde curl/postman), permitir
-    if (!origin) return callback(null, true);
-
-    // Permitir por hostname, independientemente del puerto
-    const allowedHostnames = new Set([
-      'localhost',
-      '127.0.0.1',
-      'rrhh.dbconsulting.com.ar',
-      '34.176.124.72'
-    ]);
-    try {
-      const url = new URL(normalizedOrigin);
-      const isProduction = process.env.NODE_ENV === 'production';
-
-      // En producción, forzar HTTPS excepto para localhost
-      const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
-      const isValidProtocol = isProduction && !isLocalhost
-        ? url.protocol === 'https:'  // Solo HTTPS en producción (excepto localhost)
-        : (url.protocol === 'http:' || url.protocol === 'https:'); // HTTP/HTTPS en desarrollo
-
-      const isAllowedHost = allowedHostnames.has(url.hostname);
-      // Permitir cualquier IP en el rango 192.168.*.* para desarrollo en red local
-      const isLocalNetwork = /^192\.168\.\d{1,3}\.\d{1,3}$/.test(url.hostname);
-
-      if (isValidProtocol && (isAllowedHost || isLocalNetwork)) {
-        log.debug('CORS: Origin permitido por hostname', {
-          hostname: url.hostname,
-          protocol: url.protocol,
-          isProduction
-        });
-        return callback(null, true);
-      }
-
-      // Si el protocolo no es válido en producción, loguear warning
-      if (isProduction && !isLocalhost && url.protocol !== 'https:') {
-        log.security('CORS: HTTP bloqueado en producción', {
-          origin,
-          protocol: url.protocol
-        });
-      }
-    } catch (e) {
-      log.warn('CORS: No se pudo parsear el origin como URL', { error: e.message });
-    }
-
-    // Fallback: lista exacta
-    const normalizedAllowed = allowedOrigins.map(normalize);
-    if (normalizedAllowed.includes(normalizedOrigin)) {
-      log.debug('CORS: Origin permitido por lista exacta');
-      return callback(null, true);
-    }
-
-    log.security('CORS: Origin NO permitido', { origin });
-    return callback(new Error('CORS policy: origin not allowed'), false);
-  },
+  origin: allowedOrigins,
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 200
 };
 
