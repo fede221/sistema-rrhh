@@ -30,10 +30,13 @@ import {
   Receipt as ReceiptIcon,
   Assignment as AssignmentIcon,
   ExpandMore as ExpandMoreIcon,
-  Visibility as VisibilityIcon
+  Visibility as VisibilityIcon,
+  Print as PrintIcon
 } from '@mui/icons-material';
 import usePermisos from '../hooks/usePermisos';
 import { apiRequest } from '../utils/api';
+import { API_BASE_URL, getApiBaseUrl } from '../config';
+import { generarHtmlRecibo, formatNumber } from '../utils/reciboUtils';
 
 const MiEquipo = () => {
   const [empleados, setEmpleados] = useState([]);
@@ -104,12 +107,26 @@ const MiEquipo = () => {
     }
   };
 
-  const formatNumber = (number) => {
-    if (number === null || number === undefined) return '0,00';
-    return parseFloat(number).toLocaleString('es-AR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+  const imprimirRecibo = async (periodo) => {
+    const registros = recibosEmpleado.filter(r => r.periodo === periodo);
+    if (registros.length === 0) return;
+
+    try {
+      const printWindow = window.open('', '_blank');
+      const reciboHtml = await generarHtmlRecibo(periodo, registros);
+      printWindow.document.write(reciboHtml);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.focus();
+        printWindow.print();
+        setTimeout(() => {
+          printWindow.close();
+        }, 1000);
+      };
+    } catch (error) {
+      console.error('Error al imprimir recibo:', error);
+      setError('Error al generar el recibo para impresión');
+    }
   };
 
   const formatDate = (dateString) => {
@@ -468,22 +485,36 @@ const MiEquipo = () => {
               ).map(([periodo, recibos]) => (
                 <Accordion key={periodo}>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography variant="h6">
-                      Período {periodo} 
-                      <Chip 
-                        label={recibos[0]?.tipo_liquidacion || 'N/A'} 
-                        size="small" 
-                        sx={{ ml: 2 }}
-                      />
-                      {recibos[0]?.fecha_firma && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', pr: 2 }}>
+                      <Typography variant="h6">
+                        Período {periodo} 
                         <Chip 
-                          label="Firmado" 
-                          color="success" 
+                          label={recibos[0]?.tipo_liquidacion || 'N/A'} 
                           size="small" 
-                          sx={{ ml: 1 }}
+                          sx={{ ml: 2 }}
                         />
-                      )}
-                    </Typography>
+                        {recibos[0]?.fecha_firma && (
+                          <Chip 
+                            label="Firmado" 
+                            color="success" 
+                            size="small" 
+                            sx={{ ml: 1 }}
+                          />
+                        )}
+                      </Typography>
+                      <Tooltip title="Imprimir recibo">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            imprimirRecibo(periodo);
+                          }}
+                        >
+                          <PrintIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </AccordionSummary>
                   <AccordionDetails>
                     <TableContainer>

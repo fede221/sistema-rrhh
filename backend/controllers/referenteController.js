@@ -17,11 +17,15 @@ const getEmpleadosACargo = (req, res) => {
           u.dni,
           l.fecha_ingreso,
           u.activo,
-          COUNT(r.id) as total_recibos,
+          COUNT(DISTINCT r.id) as total_recibos,
           MAX(r.PeriodoLiquidacion) as ultimo_periodo
         FROM usuarios u
         LEFT JOIN legajos l ON u.id = l.usuario_id
-        LEFT JOIN recibos_excel_raw r ON u.legajo = r.Legajo
+        LEFT JOIN recibos_excel_raw r ON (
+          r.Legajo = u.legajo 
+          OR r.Legajo = l.numero_legajo 
+          OR r.Legajo = REPLACE(REPLACE(l.numero_legajo, 'R0', ''), 'R', '')
+        )
         WHERE u.rol = 'empleado'
         GROUP BY u.id, u.nombre, u.apellido, u.dni, l.fecha_ingreso, u.activo
         ORDER BY u.apellido, u.nombre
@@ -37,11 +41,15 @@ const getEmpleadosACargo = (req, res) => {
           u.dni,
           l.fecha_ingreso,
           u.activo,
-          COUNT(r.id) as total_recibos,
+          COUNT(DISTINCT r.id) as total_recibos,
           MAX(r.PeriodoLiquidacion) as ultimo_periodo
         FROM usuarios u
         LEFT JOIN legajos l ON u.id = l.usuario_id
-        LEFT JOIN recibos_excel_raw r ON u.legajo = r.Legajo
+        LEFT JOIN recibos_excel_raw r ON (
+          r.Legajo = u.legajo 
+          OR r.Legajo = l.numero_legajo 
+          OR r.Legajo = REPLACE(REPLACE(l.numero_legajo, 'R0', ''), 'R', '')
+        )
         WHERE u.referente_id = ? AND u.rol = 'empleado'
         GROUP BY u.id, u.nombre, u.apellido, u.dni, l.fecha_ingreso, u.activo
         ORDER BY u.apellido, u.nombre
@@ -83,20 +91,24 @@ const getRecibosEmpleados = (req, res) => {
 
     let query = `
       SELECT 
-        r.id,
+        r.*,
         u.id as empleado_id,
         u.nombre,
         u.apellido,
+        e.nombre as empresa_nombre,
+        e.razon_social as empresa_razon_social,
+        e.cuit as empresa_cuit,
+        e.direccion as empresa_direccion,
+        e.logo_url as empresa_logo_url,
+        e.firma_url as empresa_firma_url,
         r.PeriodoLiquidacion as periodo,
-        r.ConcDescr as concepto,
-        r.ConcNro as codigo,
-        r.ConcCant as cantidad,
-        r.ConcImpHabCRet as importe,
         r.fecha_firma,
         r.tipo_liquidacion,
-        'N/A' as empresa_nombre
+        l.numero_legajo
       FROM recibos_excel_raw r
       INNER JOIN usuarios u ON r.Legajo = u.legajo
+      LEFT JOIN legajos l ON r.DocNumero = l.nro_documento AND (r.Legajo = l.numero_legajo OR r.Legajo = REPLACE(REPLACE(l.numero_legajo, 'R0', ''), 'R', ''))
+      LEFT JOIN empresas e ON l.empresa_id = e.id
     `;
 
     let params = [];

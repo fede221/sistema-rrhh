@@ -2656,6 +2656,11 @@ const Recibos = () => {
                 >
                   <MenuItem value="mensual">Mensual</MenuItem>
                   <MenuItem value="sac">SAC (Aguinaldo)</MenuItem>
+                  <MenuItem value="abandono de trabajo">Abandono de Trabajo</MenuItem>
+                  <MenuItem value="cesion">Cesión</MenuItem>
+                  <MenuItem value="desvinculacion">Desvinculación</MenuItem>
+                  <MenuItem value="fin de periodo a prueba">Fin de Periodo a Prueba</MenuItem>
+                  <MenuItem value="renuncia">Renuncia</MenuItem>
                 </TextField>
               </Grid>
             </Grid>
