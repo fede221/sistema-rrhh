@@ -3,7 +3,7 @@ version: '3.8'
 services:
   caddy:
     image: caddy:2-alpine
-    container_name: multi-caddy
+    container_name: rrhh-caddy
     restart: unless-stopped
     ports:
       - "80:80"
@@ -15,34 +15,32 @@ services:
       - caddy-config:/config
       - caddy-logs:/var/log/caddy
     networks:
-      - shared-network
+      - rrhh-network
     depends_on:
-      rrhh-frontend:
+      frontend:
         condition: service_healthy
       hcsi-frontend:
         condition: service_healthy
 
-  # ==========================================
-  # APLICACIÓN RRHH
-  # ==========================================
-  rrhh-backend:
-    image: elcheloide/rrhh-backend:v1.2.2
+  # RRHH
+  backend:
+    image: elcheloide/sistema-rrhh-backend:v1.2.2
     container_name: rrhh-backend
     restart: unless-stopped
     environment:
-      - DB_HOST=${RRHH_DB_HOST:-34.176.128.94}
-      - DB_USER=${RRHH_DB_USER:-root}
-      - DB_PASSWORD=${RRHH_DB_PASSWORD}
-      - DB_NAME=${RRHH_DB_NAME:-RRHH}
-      - DB_PORT=${RRHH_DB_PORT:-3306}
-      - JWT_SECRET=${RRHH_JWT_SECRET}
+      - DB_HOST=${DB_HOST:-34.176.128.94}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME:-RRHH}
+      - DB_PORT=${DB_PORT:-3306}
+      - JWT_SECRET=${JWT_SECRET}
       - NODE_ENV=production
       - PORT=3001
     volumes:
-      - ./rrhh/uploads:/app/uploads
-      - rrhh-backend-logs:/app/logs
+      - ./backend/uploads:/app/uploads
+      - backend-logs:/app/logs
     networks:
-      - shared-network
+      - rrhh-network
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "--timeout=5", "http://localhost:3001/api/health"]
       interval: 60s
@@ -50,15 +48,15 @@ services:
       retries: 5
       start_period: 60s
 
-  rrhh-frontend:
-    image: elcheloide/rrhh-frontend:v1.2.2
+  frontend:
+    image: elcheloide/sistema-rrhh-frontend:v1.2.2
     container_name: rrhh-frontend
     restart: unless-stopped
     depends_on:
-      rrhh-backend:
+      backend:
         condition: service_healthy
     networks:
-      - shared-network
+      - rrhh-network
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
       interval: 30s
@@ -66,9 +64,7 @@ services:
       retries: 3
       start_period: 10s
 
-  # ==========================================
-  # APLICACIÓN HCSI
-  # ==========================================
+  # HCSI
   hcsi-backend:
     image: elcheloide/hcsi-backend:latest
     container_name: hcsi-backend
@@ -86,7 +82,7 @@ services:
       - ./hcsi/uploads:/app/uploads
       - hcsi-backend-logs:/app/logs
     networks:
-      - shared-network
+      - rrhh-network
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "--timeout=5", "http://localhost:3002/api/health"]
       interval: 60s
@@ -102,7 +98,7 @@ services:
       hcsi-backend:
         condition: service_healthy
     networks:
-      - shared-network
+      - rrhh-network
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
       interval: 30s
@@ -111,11 +107,11 @@ services:
       start_period: 10s
 
 networks:
-  shared-network:
+  rrhh-network:
     driver: bridge
 
 volumes:
-  rrhh-backend-logs:
+  backend-logs:
   hcsi-backend-logs:
   caddy-data:
   caddy-config:
